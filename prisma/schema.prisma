@@ -1,0 +1,364 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum TimeOfDay {
+  Breakfast
+  Lunch
+  Dinner
+  Snacks
+}
+
+enum HeightUnit {
+  ft
+  in
+  cm
+}
+
+enum WeightUnit {
+  kg
+  lbs
+}
+
+enum Gender {
+  Male
+  Female
+  Other
+}
+
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  phone     String   @unique
+  otp       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  dieticianId String? @db.ObjectId
+  name        String
+  phone       String  @unique
+  email       String  @unique
+  password    String
+
+  profile String?
+
+  height      Int?
+  height_unit HeightUnit?
+
+  weight      Int?
+  weight_unit WeightUnit?
+
+  date_of_birth DateTime?
+  gender        Gender?
+
+  goal String?
+
+  water_target Int? // LITRES OF WATER 
+  sleep_target Int? // HOURS OF SLEEP 
+  step_target  Int? // NUMBER OF STEPS 
+  calories_target Int?
+
+  dietician Dietician? @relation(fields: [dieticianId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user UserWithMeals[]
+
+  waterIntakes WaterIntake[]
+  waterLogs    WaterLog[]
+
+  stepsIntakes StepIntake[]
+  stepsLogs    StepLog[]
+
+  sleepIntakes SleepIntake[]
+  sleepLogs    SleepLog[]
+
+  workout UserWithWorkout[]
+
+  weightLogs WeightLog[]
+  medicines  Medicine[]
+}
+
+model Meal {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  name        String      @unique
+  image String? 
+  nutrition   Nutrition[]
+  description String
+  ingredients String[]
+  steps       String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  meal UserWithMeals[]
+}
+
+model UserWithMeals {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  meal      Meal?    @relation(fields: [mealId], references: [id])
+  userId    String   @db.ObjectId
+  mealId    String?  @db.ObjectId
+  date      String
+  mealTime  MealTime
+  imgUrl    String?
+  comment   String?
+  review    Int?
+  finished  Boolean  @default(false)
+  quantity  Int //in grams
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mealId, date, mealTime])
+}
+
+// model MealLog {
+//   id        String         @id @default(auto()) @map("_id") @db.ObjectId
+//   user      User?          @relation(fields: [userId], references: [id])
+//   meal      UserWithMeals? @relation(fields: [mealId], references: [id])
+//   date      String //date of consumption
+//   imgUrl    String
+//   comment   String
+//   review    Int
+//   mealTime  MealTime?     
+//   finished  Boolean        @default(false)
+//   createdAt DateTime       @default(now())
+//   updatedAt DateTime       @updatedAt
+//   userId    String         @db.ObjectId
+//   mealId    String         @db.ObjectId
+
+//   @@unique([userId, mealId, date])
+// }
+
+model Nutrition {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  meal    Meal?  @relation(fields: [id], references: [id])
+  cal     Int
+  fats    Int
+  protein Int
+  carbs   Int
+}
+
+model Dietician {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  username      String   @unique
+  password      String
+  name          String
+  qualification String
+  address       String
+  aadhar        String
+  pan           String
+  other_doc     String
+  certificate   String
+  work_exp      String
+  phone         String   @unique
+  email         String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User[]
+}
+
+model Workout {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  name               String   @unique
+  description        String
+  totalCaloriesBurnt Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  excersises      WorkoutExercise[]
+  userWithWorkout UserWithWorkout[]
+}
+
+model Exercise {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   @unique
+  difficulty   String
+  caloriesBurn Int
+  description  String
+  steps        String[]
+  equipments   String[]
+  reps         Int?
+  time         Int? //in seconds
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workouts WorkoutExercise[]
+}
+
+model WorkoutExercise {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  workoutId  String    @db.ObjectId
+  exerciseId String    @db.ObjectId
+  workout    Workout?  @relation(fields: [workoutId], references: [id])
+  exercise   Exercise? @relation(fields: [exerciseId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([workoutId, exerciseId])
+}
+
+model UserWithWorkout {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  workout   Workout? @relation(fields: [workoutId], references: [id])
+  workoutId String   @db.ObjectId
+  date      String
+  finished  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, workoutId, date])
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum MealTime {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACKS
+}
+
+// ---------------------------- > water wali backchodi 
+
+model WaterIntake {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String   @db.ObjectId
+  amount     Int
+  recordedAt DateTime
+
+  waterLogId String?   @db.ObjectId
+  waterLog   WaterLog? @relation(fields: [waterLogId], references: [id])
+
+  @@index([userId, recordedAt])
+}
+
+model WaterLog {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String        @db.ObjectId
+  date         String
+  totalAmount  Int
+  waterIntakes WaterIntake[]
+}
+
+// -> -------------------------- steps wali bakchodi ----------------------------
+
+model StepIntake {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  user           User?    @relation(fields: [userId], references: [id])
+  userId         String   @db.ObjectId
+  stepsTaken     Int
+  recordedAt     DateTime
+  timeInMins     Int
+  distance       Float
+  caloriesBurned Float
+
+  stepLogId String?  @db.ObjectId
+  stepLog   StepLog? @relation(fields: [stepLogId], references: [id])
+
+  @@index([userId, recordedAt])
+}
+
+model StepLog {
+  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  user                User   @relation(fields: [userId], references: [id])
+  userId              String @db.ObjectId
+  date                String
+  totalSteps          Int
+  totalCaloriesBurned Float
+  totalDistance       Float
+  totalTimeWalkedMins Int
+
+  stepIntakes StepIntake[]
+}
+
+// -> >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>          sleep wali backchodi -> >>>>>>>>>>>>>>>>>>>>
+
+model SleepIntake {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  user        User?    @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  bedtime     String
+  wakeUpTime  String
+  timeOfSleep Int // Time of sleep in minutes
+  createdAt   DateTime @default(now())
+
+  sleepLogId String?   @db.ObjectId
+  sleepLog   SleepLog? @relation(fields: [sleepLogId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model SleepLog {
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  user         User          @relation(fields: [userId], references: [id])
+  userId       String        @db.ObjectId
+  date         String
+  totalSleep   Int // Total sleep in minutes for the day
+  sleepIntakes SleepIntake[]
+
+  @@index([userId, date])
+}
+
+// 
+
+model WeightLog {
+  id             String     @id @default(auto()) @map("_id") @db.ObjectId
+  current_weight Float
+  goal_weight    Int
+  weight_unit    WeightUnit
+  bmi            Float?
+  imageUrl       String? // compulsory 
+  rating         Int?
+  comment        String?
+
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id]) // Define the relationship with User model
+  userId String @db.ObjectId // Foreign key to User model
+}
+
+enum BeforeOrAfterMeal {
+  Before
+  After
+}
+
+model Medicine {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  name     String   
+  userId   String   @db.ObjectId
+  user     User?    @relation(fields: [userId], references: [id])
+  date     String
+  time     String
+  quantity String  
+  beforeOrAfterMeal BeforeOrAfterMeal
+  medType   String
+  finished Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
