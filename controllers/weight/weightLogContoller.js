@@ -1,4 +1,5 @@
 import prisma from "../../db/db.config.js";
+import { convertFtToCm, getBMI, lbsToKg } from "../../helpers/unitConverter.js";
 
 class WeightLogController {
   static async createLog(req, res) {
@@ -56,15 +57,39 @@ class WeightLogController {
         },
       });
 
+      let { height, height_unit } = userWithWeightLogs;
+      if (height_unit == "ft") height = convertFtToCm(height);
+
       if (!userWithWeightLogs) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      res.json({ status: 200, data: userWithWeightLogs.weightLogs });
+      const updateBMI = async (id, bmi) => {
+        await prisma.weightLog.update({
+          where: { id },
+          data: { bmi: parseFloat(bmi) },
+        });
+      };
+
+      const weightLog =
+        userWithWeightLogs.weightLogs?.map((e) => {
+          let { current_weight, weight_unit } = e;
+          if (weight_unit === "lbs") current_weight = lbsToKg(current_weight);
+          const bmi = getBMI(current_weight, height / 100);
+          if (bmi != e.bmi) {
+            console.log(bmi, e.bmi);
+            updateBMI(e.id, bmi);
+          }
+          return { ...e, bmi };
+        }) || [];
+
+      console.log(weightLog);
+
+      res.json({ status: 200, data: weightLog });
 
       // Send the created weight log as the API response
     } catch (error) {
-      console.error("Error gettign  weight logs:", error);
+      console.error("Error getting  weight logs:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }

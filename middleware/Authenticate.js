@@ -1,13 +1,12 @@
 import jwt from "jsonwebtoken";
+import prisma from "../db/db.config.js";
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader === null || authHeader === undefined) {
     return res.status(401).json({ status: 401, message: "UnAuthorized" });
   }
-
   console.log("The token is", authHeader);
-
   const token = authHeader.split(" ")[1]; // removing bearer from token
 
   //   * Verify the JWT token
@@ -18,6 +17,61 @@ const authMiddleware = (req, res, next) => {
     req.body.user = user;
     next();
   });
+};
+
+export const onlyAdmin = async (req, res, next) => {
+  if (!req.headers.authorization && !req.authorization?.startsWith("Bearer"))
+    return res.status(401).json({ message: "No Token" });
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const response = await prisma.admin.findFirst({
+      where: { id: decoded.id },
+    });
+    if (!response) return res.status(401).json({ message: "Admin only" });
+    console.log(response);
+    req.user = { ...response, password: "" };
+    next();
+  } catch (error) {
+    res.status(401).json({ message: error.message });
+  }
+};
+
+export const onlyDietician = async (req, res, next) => {
+  if (!req.headers.authorization && !req.authorization?.startsWith("Bearer"))
+    return res.status(401).json({ message: "No Token" });
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const response = await prisma.dietician.findUnique({
+      where: { id: decoded.id },
+    });
+    if (!response) return res.status(401).json({ message: "Dietician only" });
+    console.log(response);
+    req.user = { ...response, password: "" };
+    next();
+  } catch (error) {
+    res.status(401).json({ message: error.message });
+  }
+};
+
+export const onlyUser = async (req, res, next) => {
+  if (!req.headers.authorization && !req.authorization?.startsWith("Bearer"))
+    return res.status(401).json({ message: "No Token" });
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const response = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+    if (!response) return res.status(401).json({ message: "User only" });
+
+    console.log(response);
+    req.user = { ...response, password: "" };
+    next();
+  } catch (error) {
+    res.status(401).json({ message: error.message });
+  }
 };
 
 export default authMiddleware;

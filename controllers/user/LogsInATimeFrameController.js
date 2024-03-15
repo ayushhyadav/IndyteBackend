@@ -1,4 +1,9 @@
+import { format } from "date-fns";
 import prisma from "../../db/db.config.js";
+import waterLogController from "../water/waterLogController.js";
+import { formatDate, getDateRange } from "../../helpers/dateValidate.js";
+import { getBMI } from "../../helpers/unitConverter.js";
+
 const months = {
   jan: "01",
   feb: "02",
@@ -76,6 +81,100 @@ class GetLogs {
       });
     }
   }
+
+  static getDashboard = async (req, res) => {
+    try {
+      const { name, id, profile } = req.body.user;
+      const formatString = "EEEE dd MMM";
+
+      // const userId = "65dac6cf0eecc6919e18f319";
+      // const date = "2024-03-12";
+
+      const date = formatDate(new Date());
+      const userId = id;
+      const formattedDate = format(date, formatString);
+
+      // Get user
+
+      const getUser = await prisma.user.findFirst({
+        where: {
+          id: userId,
+        },
+      });
+
+      console.log(getUser);
+
+      // daily water intake
+      const fetchTodayWater = await prisma.WaterLog.findFirst({
+        where: {
+          userId,
+          date,
+        },
+        include: {
+          waterIntakes: true, // Include associated water intakes
+        },
+      });
+
+      // daily steps log
+      const stepLog = await prisma.stepLog.findFirst({
+        where: {
+          userId,
+          date,
+        },
+        include: {
+          stepIntakes: true, // Include associated step intakes
+        },
+      });
+
+      // get medicine
+      const medicineLog = await prisma.medicine.findMany({
+        where: {
+          userId: userId,
+          date,
+        },
+      });
+
+      // get Meals
+      const mealLog = await prisma.userWithMeals.findMany({
+        where: {
+          userId,
+          date,
+        },
+      });
+      const { startDate, endDate } = getDateRange(7, new Date());
+
+      const weightLogs = await prisma.weightLog.findMany({
+        where: {
+          userId,
+          createdAt: {
+            gte: new Date(startDate).toISOString(), // Ensure ISO-8601 format
+            lte: new Date(endDate).toISOString(), // Ensure ISO-8601 format
+          },
+        },
+      });
+
+      return res.status(200).json({
+        date: formattedDate,
+        name: getUser.name,
+        target: {
+          water: getUser.water_target,
+          sleep: getUser.sleep_target,
+          step: getUser.step_target,
+          calories: getUser.calories_target,
+        },
+        bmi: "getBMI(weight, height)",
+        steps: stepLog,
+        medicine: medicineLog,
+        waterIntake: fetchTodayWater,
+        sleepLog: "sleepLog",
+        meals: mealLog,
+        weight: weightLogs,
+      });
+    } catch (error) {
+      console.log(error.message);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
 }
 
 export default GetLogs;

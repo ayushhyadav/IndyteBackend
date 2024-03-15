@@ -45,7 +45,6 @@ router.post("/auth/resetpass", AuthController.resetPassword);
 
 router.get("/profile", authMiddleware, ProfileController.index); // private route
 router.put("/profile/:id", authMiddleware, ProfileController.update); // private route
-
 router.get("/getuserprofile", ProfileController.getSingleUseronId);
 
 // --------------------------------------------->
@@ -151,8 +150,17 @@ router.post("/weight-logs/:userId", WeightLogController.createLog);
 router.get("/get-weight-logs/:userId", WeightLogController.getLogs);
 
 //progress Tracker
+router.get(
+  "/getusermealprogress",
+  authMiddleware,
+  MealController.getUserMealsProgress
+);
 
-router.get("/getuserworkoutprogress", authMiddleware, ProgressTracker.getUserWorkoutProgress);
+router.get(
+  "/getuserworkoutprogress",
+  authMiddleware,
+  ProgressTracker.getUserWorkoutProgress
+);
 
 router.get("/getdailyworkoutprogress", ProgressTracker.getDailyWorkoutProgress);
 router.get(
@@ -194,7 +202,6 @@ router.get(
 );
 // router.get('/getlastmonthweightprogress', ProgressTracker.LastMonthWeightProgress);
 
-
 //medicine
 router.get("/getmedicines", MedicineController.getMedicinesForDateAndUser);
 router.post("/createmedicine", MedicineController.createMedicine);
@@ -207,5 +214,8 @@ router.get("/all-meal-stats", MealStatsController.getAllTimeData);
 // get workout stats
 router.get("/workout-stats", WorkoutStatsController.getStats);
 router.get("/all-workout-stats", WorkoutStatsController.getAllTimeWorkoutData);
+
+// getDashboardStats
+router.get("/dashboard", authMiddleware, GetLogs.getDashboard);
 
 export default router;

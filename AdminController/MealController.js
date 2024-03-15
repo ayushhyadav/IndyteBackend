@@ -1,4 +1,5 @@
 import prisma from "../db/db.config.js";
+import { validDate, getDateRange } from "../helpers/dateValidate.js";
 
 class MealController {
   static async register(req, res) {
@@ -162,6 +163,115 @@ class MealController {
         .json({ message: `Something went wrong! ${error}` });
     }
   }
+  static getUserMealsProgress = async (req, res) => {
+    const user = req.body.user;
+    const date = req.query.date;
+
+    try {
+      if (!date)
+        return res.status(400).json({
+          message: "Date not found",
+        });
+
+      const parseData = (userMeals) => {
+        let breakfast = 0;
+        let lunch = 0;
+        let dinner = 0;
+        let other = 0;
+
+        if (!userMeals.length > 0) {
+          return res.status(400).json({
+            message: "User meals not found for the current period.",
+          });
+        }
+
+        for (const meals of userMeals) {
+          if (meals.finished) {
+            console.log(meals.meal?.nutrition);
+            console.log(meals.mealTime);
+
+            if (meals.meal?.nutrition) {
+              switch (meals.mealTime) {
+                case "BREAKFAST":
+                  breakfast += meals.meal.nutrition[0]?.cal;
+                  break;
+                case "LUNCH":
+                  lunch += meals.meal.nutrition[0]?.cal;
+                  break;
+                case "DINNER":
+                  dinner += meals.meal.nutrition[0]?.cal;
+                  break;
+                default:
+                  other += meals.meal.nutrition[0]?.cal;
+                  break;
+              }
+            }
+          }
+        }
+
+        return res.status(200).json({
+          status: 200,
+          message: "User meals found for the current date.",
+          data: {
+            breakfast,
+            lunch,
+            dinner,
+            other,
+          },
+        });
+      };
+
+      const queryData = async (days, currentDate) => {
+        const { startDate, endDate } = getDateRange(days, currentDate);
+
+        const userMeals = await prisma.userWithMeals.findMany({
+          where: {
+            userId: user.id,
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          include: {
+            meal: {
+              include: {
+                nutrition: true,
+              },
+            },
+          },
+        });
+        parseData(userMeals);
+        console.log(userMeals);
+      };
+
+      if (validDate(date)) {
+        await queryData(1, new Date(date));
+      } else {
+        switch (date) {
+          case "weekly":
+            await queryData(7, new Date());
+            break;
+          case "monthly":
+            await queryData(31, new Date());
+            break;
+          case "yearly":
+            await queryData(365, new Date());
+            break;
+          case "alltime":
+            await queryData(365 * 5, new Date());
+            break;
+          default:
+            return res.status(400).json({
+              message:
+                "Date not validated, it must be type of date in YYYY-MM-DD, weekly, monthly, yearly or alltime",
+            });
+        }
+      }
+    } catch (error) {
+      console.log(error.message);
+      return res.status(500).json({ message: "internal server error" });
+    }
+  };
 }
 
 export default MealController;

@@ -20,3 +20,9 @@ export const getDateRange = (date, currentDate) => {
   const endDate = format(endOfDay(currentDate, 1), "yyyy-MM-dd");
   return { startDate, endDate };
 };
+
+export const formatDate = (date) => {
+  const formatString = "yyyy-MM-dd";
+  const formattedDate = format(date, formatString);
+  return formattedDate;
+};

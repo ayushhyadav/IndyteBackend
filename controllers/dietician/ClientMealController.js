@@ -36,15 +36,14 @@ class ClientMealController {
         });
       }
 
-         const alreadyAssigned = await prisma.userWithMeals.findFirst({
-
-            where: {
-                userId,
-                mealId,
-                date,
-                mealTime
-            }});
-
+      const alreadyAssigned = await prisma.userWithMeals.findFirst({
+        where: {
+          userId,
+          mealId,
+          date,
+          mealTime,
+        },
+      });
 
       if (alreadyAssigned) {
         return res.status(400).json({
@@ -59,18 +58,16 @@ class ClientMealController {
           mealId,
           date,
           mealTime,
-          quantity
+          quantity,
         },
       });
-
 
       return res.status(200).json({
         status: 200,
         message: "Meal assigned successfully.",
         data: assignMeal,
       });
-    } 
-    catch (error) {
+    } catch (error) {
       console.log("The error is", error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         return res.status(400).json({
@@ -126,11 +123,10 @@ class ClientMealController {
       });
     } catch (error) {
       console.log("The error is", error);
-        return res.status(500).json({
-          status: 500,
-          message: "Something went wrong.Please try again.",
-  
-      })
+      return res.status(500).json({
+        status: 500,
+        message: "Something went wrong.Please try again.",
+      });
     }
   }
 
@@ -145,7 +141,7 @@ class ClientMealController {
       }
       const user = await prisma.user.findUnique({
         where: {
-          id: userId
+          id: userId,
         },
       });
 
@@ -158,9 +154,9 @@ class ClientMealController {
       const userMeals = await prisma.userWithMeals.findMany({
         where: {
           userId,
-          date
+          date,
         },
-        include: {  
+        include: {
           meal: {
             include: {
               nutrition: true,
@@ -168,7 +164,7 @@ class ClientMealController {
           },
         },
       });
-      // here 
+      // here
       return res.status(200).json({
         status: 200,
         message: "User meals fetched successfully.",
@@ -176,65 +172,61 @@ class ClientMealController {
       });
     } catch (error) {
       console.log("The error is", error);
-        return res.status(500).json({
-          status: 500,
-          message: "Something went wrong.Please try again.",
-  
-      })
+      return res.status(500).json({
+        status: 500,
+        message: "Something went wrong.Please try again.",
+      });
     }
   }
 
-  static async unassignMeal (req, res) {
+  static async unassignMeal(req, res) {
     const { mealId, userId, date, mealTime } = req.body;
-      try{
-          if(!mealId || !userId || !date || !mealTime){
-              return res.status(400).json({
-                  status: 400,
-                  message: "Please provide meal id, user id, day of week and meal time.",
-              });
-          }
-
-          const userWithMeals = await prisma.userWithMeals.findUnique({
-              where: 
-              {
-                userId_mealId_date_mealTime : {
-                  userId,
-                  mealId,
-                  date,
-                  mealTime
-              }
-            }
-          });
-
-          if(!userWithMeals){
-              return res.status(400).json({
-                  status: 400,
-                  message: "Meal not assigned to this user.",
-              });
-          }
-  
-          const unassignMeal = await prisma.userWithMeals.delete({
-              where: {
-                  id: userWithMeals.id
-              }
-          });
-  
-          return res.status(200).json({
-              status: 200,
-              message: "Meal unassigned successfully.",
-              data: unassignMeal,
-          });
+    try {
+      if (!mealId || !userId || !date || !mealTime) {
+        return res.status(400).json({
+          status: 400,
+          message:
+            "Please provide meal id, user id, day of week and meal time.",
+        });
       }
 
-      catch(error){
-          console.log("The error is", error);
-          return res.status(500).json({
-              status: 500,
-              message: "Something went wrong.Please try again.",
-          });
+      const userWithMeals = await prisma.userWithMeals.findUnique({
+        where: {
+          userId_mealId_date_mealTime: {
+            userId,
+            mealId,
+            date,
+            mealTime,
+          },
+        },
+      });
+
+      if (!userWithMeals) {
+        return res.status(400).json({
+          status: 400,
+          message: "Meal not assigned to this user.",
+        });
       }
+
+      const unassignMeal = await prisma.userWithMeals.delete({
+        where: {
+          id: userWithMeals.id,
+        },
+      });
+
+      return res.status(200).json({
+        status: 200,
+        message: "Meal unassigned successfully.",
+        data: unassignMeal,
+      });
+    } catch (error) {
+      console.log("The error is", error);
+      return res.status(500).json({
+        status: 500,
+        message: "Something went wrong.Please try again.",
+      });
+    }
   }
-  
 }
 
 export default ClientMealController;

@@ -30,7 +30,7 @@ class DeiticianProfileController {
       });
       return res.json({
         status: 200,
-        message: "Dietiicaian created successfully",
+        message: "Dietician created successfully",
         dietician,
       });
     } catch (error) {
