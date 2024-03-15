@@ -32,7 +32,7 @@ app.use(
 );
 
 app.get("/", (req, res) => {
-  res.send("hello");
+  res.send("Hello Server");
 });
 
 app.use("/api", ApiRoutes);
