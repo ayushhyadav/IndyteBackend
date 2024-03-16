@@ -1,5 +1,5 @@
 import { Router } from "express";
-import AdminAuthController from "../controllers/auth/adminAuthController.js";
+import AdminAuthController from "../controllers/auth/AdminAuthController.js";
 import { onlyAdmin } from "../middleware/Authenticate.js";
 
 const adminRoutes = Router();
