@@ -34,6 +34,7 @@ app.use(fileUpload());
 app.get("/", (req, res) => {
   res.send("Hello Server");
 });
+app.get("/check", (req, res) => res.send("Hello checking"));
 
 app.use("/api", ApiRoutes);
 app.use("/api/user", userRoutes);
