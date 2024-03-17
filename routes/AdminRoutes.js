@@ -10,6 +10,6 @@ adminRoutes.get("/me", onlyAdmin, AdminAuthController.me);
 adminRoutes.post("/requestOtp", AdminAuthController.requestOtp);
 adminRoutes.put("/resetPassword", AdminAuthController.resetPassword);
 
-adminRoutes.delete("/delete", onlyAdmin, AdminAuthController.deleteAdmin);
+adminRoutes.delete("/delete/:id", onlyAdmin, AdminAuthController.deleteAdmin);
 
 export default adminRoutes;

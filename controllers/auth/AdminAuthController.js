@@ -213,14 +213,20 @@ export default class AdminAuthController {
     try {
       const { id } = req.params;
 
-      // Delete the dietician
-      const dietician = await prisma.admin.delete({
+      const findAdmin = await prisma.admin.findFirst({
         where: {
           id: id,
         },
       });
-      if (!dietician)
-        return res.status(400).json({ message: "User not found" });
+      if (!findAdmin)
+        return res.status(404).json({ message: "Admin not found" });
+      // Delete the dietician
+      const admin = await prisma.admin.delete({
+        where: {
+          id: id,
+        },
+      });
+      if (!admin) return res.status(400).json({ message: "Admin not found" });
       const { password, ...all } = dietician;
       return res.status(201).json({
         message: "Dietician deleted successfully",
