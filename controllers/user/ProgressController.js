@@ -16,7 +16,7 @@ class ProgressTracker {
   //workout progress
 
   static getUserWorkoutProgress = async (req, res) => {
-    const user = req.body.user;
+    const user = req.user;
     const date = req.query.date;
 
     try {
@@ -25,17 +25,15 @@ class ProgressTracker {
           message: "Date not found",
         });
 
-      const parseData = (userWorkouts) => {
+      const parseData = (userWorkouts, time) => {
         let targetCalories = 0;
         let burntCalories = 0;
         let finishedWorkouts = 0;
         let unfinishedWorkouts = 0;
 
-        console.log(userWorkouts);
-
         if (!userWorkouts.length > 0) {
           return res.status(400).json({
-            message: "User workouts not found for the current month.",
+            message: "User workouts not found for the current " + time,
           });
         }
 
@@ -51,7 +49,7 @@ class ProgressTracker {
 
         return res.status(200).json({
           status: 200,
-          message: "User workouts found for the current month.",
+          message: "User workouts found for the current " + time,
           data: {
             targetCalories,
             burntCalories,
@@ -76,7 +74,7 @@ class ProgressTracker {
             workout: true,
           },
         });
-        parseData(userWorkouts);
+        parseData(userWorkouts, date);
       };
 
       if (validDate(date)) {

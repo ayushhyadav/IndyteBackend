@@ -78,7 +78,6 @@ class AuthController {
           },
         });
       }
-
       const otpData = await prisma.otp.findUnique({
         where: {
           phone: payload.phone,

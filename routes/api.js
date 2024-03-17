@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AuthController from "../controllers/user/AuthController.js";
-import authMiddleware from "../middleware/Authenticate.js";
+import authMiddleware, { onlyUser } from "../middleware/Authenticate.js";
 
 import ProfileController from "../controllers/ProfileController.js";
 import DeiticianProfileController from "../AdminController/DieticianProfileController.js";
@@ -48,7 +48,6 @@ router.put("/profile/:id", authMiddleware, ProfileController.update); // private
 router.get("/getuserprofile", ProfileController.getSingleUseronId);
 
 // --------------------------------------------->
-
 // create dietician
 router.post("/diet", DeiticianProfileController.register);
 router.post("/dietician-login", DieticianAuthController.login);
@@ -152,13 +151,13 @@ router.get("/get-weight-logs/:userId", WeightLogController.getLogs);
 //progress Tracker
 router.get(
   "/getusermealprogress",
-  authMiddleware,
+  onlyUser,
   MealController.getUserMealsProgress
 );
 
 router.get(
   "/getuserworkoutprogress",
-  authMiddleware,
+  onlyUser,
   ProgressTracker.getUserWorkoutProgress
 );
 

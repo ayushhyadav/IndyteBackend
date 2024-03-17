@@ -3,42 +3,34 @@ import DieticianAuthController from "../controllers/auth/DieticianAuthController
 import auth, {
   onlyAdmin,
   onlyDietician,
+  allUser,
   onlyUser,
 } from "../middleware/Authenticate.js";
 const dieticianRoutes = Router();
 
 // auth dietician routes
 
-dieticianRoutes.post("/register", DieticianAuthController.register);
+dieticianRoutes.post("/register", onlyAdmin, DieticianAuthController.register);
 dieticianRoutes.post("/login", DieticianAuthController.login);
-
-dieticianRoutes.post(
-  "/requestOtp",
-  onlyDietician,
-  DieticianAuthController.requestOtp
-);
+dieticianRoutes.post("/requestOtp", DieticianAuthController.requestOtp);
 dieticianRoutes.post(
   "/resetPassword",
   onlyDietician,
   DieticianAuthController.resetPassword
 );
 dieticianRoutes.get("/me", onlyDietician, DieticianAuthController.me);
-dieticianRoutes.get("/getAll", DieticianAuthController.getAll);
-dieticianRoutes.get("/me/:id", DieticianAuthController.getById);
+dieticianRoutes.get("/me/:id", allUser, DieticianAuthController.getById);
+dieticianRoutes.get("/getAll", allUser, DieticianAuthController.getAll);
 
+dieticianRoutes.put("/update", onlyDietician, DieticianAuthController.update);
 dieticianRoutes.put(
-  "/updateDietician",
-  onlyDietician,
-  DieticianAuthController.update
-);
-dieticianRoutes.put(
-  "/updateDietician/:id",
+  "/update/:id",
   onlyAdmin,
   DieticianAuthController.updateById
 );
 
 dieticianRoutes.delete(
-  "/deleteDietician/:id",
+  "/delete/:id",
   onlyAdmin,
   DieticianAuthController.deleteDietician
 );

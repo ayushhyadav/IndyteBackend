@@ -164,7 +164,7 @@ class MealController {
     }
   }
   static getUserMealsProgress = async (req, res) => {
-    const user = req.body.user;
+    const user = req.user;
     const date = req.query.date;
 
     try {
@@ -173,7 +173,7 @@ class MealController {
           message: "Date not found",
         });
 
-      const parseData = (userMeals) => {
+      const parseData = (userMeals, time) => {
         let breakfast = 0;
         let lunch = 0;
         let dinner = 0;
@@ -181,15 +181,12 @@ class MealController {
 
         if (!userMeals.length > 0) {
           return res.status(400).json({
-            message: "User meals not found for the current period.",
+            message: "User meals not found for the current " + time,
           });
         }
 
         for (const meals of userMeals) {
           if (meals.finished) {
-            console.log(meals.meal?.nutrition);
-            console.log(meals.mealTime);
-
             if (meals.meal?.nutrition) {
               switch (meals.mealTime) {
                 case "BREAKFAST":
@@ -211,7 +208,7 @@ class MealController {
 
         return res.status(200).json({
           status: 200,
-          message: "User meals found for the current date.",
+          message: "User meals found for the current " + time,
           data: {
             breakfast,
             lunch,
@@ -240,8 +237,7 @@ class MealController {
             },
           },
         });
-        parseData(userMeals);
-        console.log(userMeals);
+        parseData(userMeals, date);
       };
 
       if (validDate(date)) {

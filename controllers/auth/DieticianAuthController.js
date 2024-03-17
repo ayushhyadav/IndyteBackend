@@ -1,10 +1,11 @@
 import prisma from "../../db/db.config.js";
 import bcrypt from "bcryptjs";
-import { sendOtp } from "../otpController.js";
+import { sendOTP } from "../otpController.js";
 
 import {
   dieticianRegisterSchema,
   dieticianLoginSchema,
+  dieticianUpdateSchema,
   validatorCompile,
 } from "../../validations/authValidation.js";
 
@@ -70,14 +71,6 @@ class DieticianAuthController {
         where: {
           email: payload.email,
         },
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-          email: true,
-          username: true,
-          password: true,
-        },
       });
 
       if (findDietician) {
@@ -98,8 +91,10 @@ class DieticianAuthController {
         };
         const token = await generateToken(payloadData);
 
+        const { password, ...all } = findDietician;
+
         return res.json({
-          ...payload,
+          ...all,
           access_token: `Bearer ${token}`,
           role: "dietician",
         });
@@ -115,8 +110,10 @@ class DieticianAuthController {
   }
 
   static async requestOtp(req, res) {
-    const { phone } = req.user;
     try {
+      const { phone } = req.body;
+      if (!phone)
+        return res.status(404).json({ message: "phone number required" });
       const findDietician = await prisma.dietician.findUnique({
         where: {
           phone,
@@ -124,10 +121,15 @@ class DieticianAuthController {
       });
       if (!findDietician) {
         return res.status(400).json({
-          message: "dietician not found for given email",
+          message: "Dietician not found for given phone number.",
         });
       }
-      await sendOtp(req, res);
+      const otp = await sendOTP(phone);
+      if (otp.error)
+        return res.status(400).json({ message: "Internal Server Error" });
+      return res.status(200).json({
+        message: "OTP sent successfully",
+      });
     } catch (error) {
       console.log(error.message);
       return res.status(500).json({
@@ -183,23 +185,15 @@ class DieticianAuthController {
         where: {
           id,
         },
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-          email: true,
-          username: true,
-        },
       });
       if (!findDietician) {
         return res.status(400).json({
           message: "Dietician not found for given email",
         });
       }
-      return res.json({
-        status: 200,
-        message: "Dietician found successfully",
-        dietician: findDietician,
+      const { password, ...all } = findDietician;
+      return res.status(200).json({
+        ...all,
         role: "dietician",
       });
     } catch (error) {
@@ -231,8 +225,8 @@ class DieticianAuthController {
   }
 
   static async getById(req, res) {
-    const { id } = req.params;
     try {
+      const { id } = req.params;
       const findDietician = await prisma.dietician.findUnique({
         where: { id: id },
       });
@@ -255,23 +249,30 @@ class DieticianAuthController {
   }
 
   static async update(req, res) {
-    const { id, role } = req.user;
-    const updateData = req.body;
-    if (role !== "dietician")
-      return res.status(400).json({ message: "Only for dieticians." });
     try {
+      const { id, role } = req.user;
+      const validator = await validatorCompile(dieticianUpdateSchema, req.body);
+      if (!validator)
+        return res.status(401).json({ message: "Invalid update request" });
+      if (role !== "dietician")
+        return res.status(400).json({ message: "Only for dieticians." });
+
       const updatedDietician = await prisma.dietician.update({
         where: {
           id: id,
         },
-        data: updateData,
+        data: validator,
       });
-      if (!updatedDietician) throw new Error();
+      if (!updatedDietician)
+        return res
+          .status(404)
+          .json({ message: "No dietician found for the id" });
+
       const { password, ...all } = updatedDietician;
 
       return res.status(201).json({
         message: "Dietician updated successfully",
-        dietician: all,
+        ...all,
       });
     } catch (error) {
       console.log(error.message);
@@ -279,21 +280,36 @@ class DieticianAuthController {
     }
   }
   static async updateById(req, res) {
-    const { id } = req.params;
-    const updateData = req.body;
     try {
+      const { id } = req.params;
+      const validator = await validatorCompile(dieticianUpdateSchema, req.body);
+      if (!validator)
+        return res.status(401).json({ message: "Invalid update request" });
+
+      const dieticianSearch = await prisma.dietician.findUnique({
+        where: { id: id },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!dieticianSearch)
+        return res
+          .status(404)
+          .json({ message: "No dietician found for the id" });
+
       const updatedDietician = await prisma.dietician.update({
         where: {
           id: id,
         },
-        data: updateData,
+        data: validator,
       });
-      if (!updatedDietician) throw new Error();
+
       const { password, ...all } = updatedDietician;
 
       return res.status(201).json({
         message: "Dietician updated successfully",
-        dietician: all,
+        ...all,
       });
     } catch (error) {
       console.log(error.message);
@@ -303,6 +319,14 @@ class DieticianAuthController {
   static async deleteDietician(req, res) {
     try {
       const { id } = req.params;
+      if (!id)
+        return res.status(404).json({ message: "Dietician id not found" });
+
+      const checkDietician = await prisma.dietician.findUnique({
+        where: { id: id },
+      });
+      if (!checkDietician)
+        return res.status(404).json({ message: "Dietician not found" });
 
       // Delete the dietician
       const dietician = await prisma.dietician.delete({
@@ -313,7 +337,7 @@ class DieticianAuthController {
 
       return res.status(201).json({
         message: "Dietician deleted successfully",
-        dietician: dietician,
+        ...dietician,
       });
     } catch (error) {
       console.log(error.message);

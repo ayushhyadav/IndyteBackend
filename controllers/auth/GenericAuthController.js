@@ -46,9 +46,7 @@ export default class genericAuth {
       if (admin) {
         if (!bcrypt.compareSync(validator.password, admin.password)) {
           return res.status(400).json({
-            errors: {
-              password: "Invalid Credentials.",
-            },
+            message: "Invalid email or password.",
           });
         }
         const { password, ...all } = admin;

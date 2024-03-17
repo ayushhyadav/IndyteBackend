@@ -1,6 +1,6 @@
 import prisma from "../../db/db.config.js";
 import bcrypt from "bcryptjs";
-import { sendOtp } from "../otpController.js";
+import { sendOTP } from "../otpController.js";
 import { generateToken } from "../../helpers/privacy.js";
 
 import {
@@ -47,7 +47,7 @@ export default class AdminAuthController {
           username: true,
         },
       });
-      const token = generateToken({ ...admin, role: "admin" });
+      const token = await generateToken({ ...admin, role: "admin" });
       return res.status(201).json({
         ...admin,
         access_token: `Bearer ${token}`,
@@ -69,22 +69,12 @@ export default class AdminAuthController {
         where: {
           email: payload.email,
         },
-        select: {
-          id: true,
-          name: true,
-          phone: true,
-          email: true,
-          username: true,
-          password: true,
-        },
       });
 
       if (findAdmin) {
         if (!bcrypt.compareSync(payload.password, findAdmin.password)) {
           return res.status(400).json({
-            errors: {
-              password: "Invalid Credentials.",
-            },
+            message: "Invalid email or password.",
           });
         }
         const payloadData = {
@@ -93,12 +83,14 @@ export default class AdminAuthController {
           username: findAdmin.username,
           phone: findAdmin.phone,
           email: findAdmin.email,
-          role: "dietician",
+          role: "admin",
         };
         const token = await generateToken(payloadData);
 
+        const { password, ...all } = findAdmin;
+
         return res.json({
-          ...payloadData,
+          ...all,
           access_token: `Bearer ${token}`,
           role: "admin",
         });
@@ -142,8 +134,7 @@ export default class AdminAuthController {
   static async requestOtp(req, res) {
     const { phone } = req.body;
     if (!phone)
-      return res.status(404).json({ message: "No user found with the id" });
-    console.log(phone);
+      return res.status(404).json({ message: "Phone number not provided." });
     try {
       const findAdmin = await prisma.admin.findUnique({
         where: {
@@ -152,10 +143,16 @@ export default class AdminAuthController {
       });
       if (!findAdmin) {
         return res.status(400).json({
-          message: "admin not found for given email",
+          message: "Admin not found for given number",
         });
       }
-      await sendOtp(req, res);
+      const otp = await sendOTP(phone);
+
+      if (otp.error)
+        return res.status(400).json({ message: "Internal Server Error" });
+      return res.status(200).json({
+        message: "OTP sent successfully",
+      });
     } catch (error) {
       console.log(error.message);
       return res.status(500).json({
@@ -166,11 +163,19 @@ export default class AdminAuthController {
   static async resetPassword(req, res) {
     try {
       const { phone, otp, password } = req.body;
+      if (!phone || !otp || !password) {
+        return res.status(400).json({
+          message: "Please provide phone, otp and password",
+        });
+      }
       const findAdmin = await prisma.admin.findUnique({
         where: {
           phone: phone,
         },
       });
+      if (!findAdmin)
+        return res.status(404).json({ message: "Admin not found" });
+
       const oldOtp = await prisma.otp.findUnique({
         where: {
           phone,
@@ -188,7 +193,7 @@ export default class AdminAuthController {
 
       const updatePassword = await prisma.admin.update({
         where: {
-          id: findDietician.id,
+          id: findAdmin.id,
         },
         data: {
           password: newPassword,

@@ -29,8 +29,7 @@ export const onlyAdmin = async (req, res, next) => {
       where: { id: decoded.id },
     });
     if (!response) return res.status(401).json({ message: "Admin only" });
-    console.log(response);
-    req.user = { ...response, password: "" };
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ message: error.message });
@@ -48,7 +47,7 @@ export const onlyDietician = async (req, res, next) => {
     });
     if (!response) return res.status(401).json({ message: "Dietician only" });
     console.log(response);
-    req.user = { ...response, password: "" };
+    req.user = decoded;
     next();
   } catch (error) {
     res.status(401).json({ message: error.message });
@@ -67,8 +66,25 @@ export const onlyUser = async (req, res, next) => {
     if (!response) return res.status(401).json({ message: "User only" });
 
     console.log(response);
-    req.user = { ...response, password: "" };
+    req.user = decoded;
     next();
+  } catch (error) {
+    res.status(401).json({ message: error.message });
+  }
+};
+export const allUser = async (req, res, next) => {
+  if (!req.headers.authorization && !req.authorization?.startsWith("Bearer"))
+    return res.status(401).json({ message: "No Token" });
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.user == "admin" || "dietician" || "user") {
+      req.user = decoded;
+      next();
+    } else
+      return res
+        .status(401)
+        .json({ message: "Authenticated user or dietician or admin only" });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }

@@ -4,15 +4,11 @@ import { onlyAdmin } from "../middleware/Authenticate.js";
 
 const adminRoutes = Router();
 
-adminRoutes.post("/register", AdminAuthController.register);
+adminRoutes.post("/register", onlyAdmin, AdminAuthController.register);
 adminRoutes.post("/login", AdminAuthController.login);
 adminRoutes.get("/me", onlyAdmin, AdminAuthController.me);
-adminRoutes.post("/requestOtp", onlyAdmin, AdminAuthController.requestOtp);
-adminRoutes.post(
-  "/resetPassword",
-  onlyAdmin,
-  AdminAuthController.resetPassword
-);
+adminRoutes.post("/requestOtp", AdminAuthController.requestOtp);
+adminRoutes.put("/resetPassword", AdminAuthController.resetPassword);
 
 adminRoutes.delete("/delete", onlyAdmin, AdminAuthController.deleteAdmin);
 

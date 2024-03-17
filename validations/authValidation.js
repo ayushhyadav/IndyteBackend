@@ -5,11 +5,34 @@ export const registerSchema = vine.object({
   email: vine.string().email(),
   phone: vine.string().minLength(13).maxLength(13),
   password: vine.string().minLength(6).maxLength(100),
+  height: vine.string().optional(),
+  height_unit: vine.string().optional(),
+  weight: vine.string().optional(),
+  weight_unit: vine.string().optional(),
+  date_of_birth: vine.string().optional(),
+  gender: vine.string().optional(),
+  goal: vine.string().optional(),
+  profile: vine.string().optional(),
 });
 
+export const updateSchema = vine.object({
+  height: vine.number().optional(),
+  height_unit: vine.string().optional(),
+  weight: vine.number().optional(),
+  weight_unit: vine.string().optional(),
+  date_of_birth: vine.string().optional(),
+  gender: vine.string().optional(),
+  goal: vine.string().optional(),
+  profile: vine.string().optional(),
+});
 export const loginSchema = vine.object({
   email: vine.string().email(),
-  password: vine.string(),
+  password: vine.string().minLength(6).maxLength(100),
+});
+
+export const generateOtpSchema = vine.object({
+  email: vine.string().email(),
+  phone: vine.string().minLength(13).maxLength(13),
 });
 
 export const dieticianRegisterSchema = vine.object({
@@ -25,6 +48,15 @@ export const dieticianRegisterSchema = vine.object({
   phone: vine.string().minLength(13).maxLength(13),
   work_exp: vine.string(),
   email: vine.string().email(),
+});
+export const dieticianUpdateSchema = vine.object({
+  qualification: vine.string().optional(),
+  address: vine.string().optional(),
+  aadhar: vine.string().optional(),
+  pan: vine.string().optional(),
+  other_doc: vine.string().optional(),
+  certificate: vine.string().optional(),
+  work_exp: vine.string().optional(),
 });
 export const adminRegisterSchema = vine.object({
   username: vine.string(),

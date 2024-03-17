@@ -1,7 +1,6 @@
 import express from "express";
 import { createRouteHandler } from "uploadthing/express";
-// import uploadRouter from "./config/uploadthing.js";
-import "dotenv/config";
+import uploadRouter from "./config/uploadthing.js";
 import fileUpload from "express-fileupload";
 import ApiRoutes from "./routes/api.js";
 import cors from "cors";
@@ -17,8 +16,8 @@ app.use(cors());
 // def middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(fileUpload());
 
+// app.use(fileUpload());
 // app.use(
 //   "/api/uploadthing",
 //   createRouteHandler({
@@ -40,7 +39,7 @@ app.use("/api", ApiRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/dietician", dieticianRoutes);
 app.use("/api/admin", adminRoutes);
-app.post("/api/websiteLogin", genericAuth.login);
+app.post("/api/auth/websiteLogin", genericAuth.login);
 
 app.listen(3000, () => {
   console.log("server running on 3000");
