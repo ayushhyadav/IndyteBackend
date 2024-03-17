@@ -215,6 +215,6 @@ router.get("/workout-stats", WorkoutStatsController.getStats);
 router.get("/all-workout-stats", WorkoutStatsController.getAllTimeWorkoutData);
 
 // getDashboardStats
-router.get("/dashboard", authMiddleware, GetLogs.getDashboard);
+router.get("/dashboard", onlyUser, GetLogs.getDashboard);
 
 export default router;

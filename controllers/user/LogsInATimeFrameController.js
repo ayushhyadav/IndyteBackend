@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import prisma from "../../db/db.config.js";
 import waterLogController from "../water/waterLogController.js";
 import { formatDate, getDateRange } from "../../helpers/dateValidate.js";
-import { getBMI } from "../../helpers/unitConverter.js";
+import { getBMI, lbsToKg, convertFtToCm } from "../../helpers/unitConverter.js";
 
 const months = {
   jan: "01",
@@ -84,7 +84,7 @@ class GetLogs {
 
   static getDashboard = async (req, res) => {
     try {
-      const { name, id, profile } = req.body.user;
+      const { id } = req.user;
       const formatString = "EEEE dd MMM";
 
       // const userId = "65dac6cf0eecc6919e18f319";
@@ -102,10 +102,17 @@ class GetLogs {
         },
       });
 
-      console.log(getUser);
+      if (!getUser) return res.status(401).json({ message: "User not found" });
+
+      let { height, height_unit, weight, weight_unit } = getUser;
+
+      if (height_unit == "ft") height = convertFtToCm(height);
+      if (weight_unit == "lbs") weight = lbsToKg(weight);
+
+      const bmi = getBMI(weight, height / 100);
 
       // daily water intake
-      const fetchTodayWater = await prisma.WaterLog.findFirst({
+      const fetchTodayWater = await prisma.waterLog.findFirst({
         where: {
           userId,
           date,
@@ -156,13 +163,14 @@ class GetLogs {
       return res.status(200).json({
         date: formattedDate,
         name: getUser.name,
+        user: { ...getUser },
         target: {
           water: getUser.water_target,
           sleep: getUser.sleep_target,
           step: getUser.step_target,
           calories: getUser.calories_target,
         },
-        bmi: "getBMI(weight, height)",
+        bmi,
         steps: stepLog,
         medicine: medicineLog,
         waterIntake: fetchTodayWater,
