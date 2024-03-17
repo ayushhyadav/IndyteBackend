@@ -1,7 +1,11 @@
 import { format } from "date-fns";
 import prisma from "../../db/db.config.js";
 import waterLogController from "../water/waterLogController.js";
-import { formatDate, getDateRange } from "../../helpers/dateValidate.js";
+import {
+  formatDate,
+  getDateRange,
+  findNearestTime,
+} from "../../helpers/dateValidate.js";
 import { getBMI, lbsToKg, convertFtToCm } from "../../helpers/unitConverter.js";
 
 const months = {
@@ -122,6 +126,16 @@ class GetLogs {
         },
       });
 
+      const waterDetails = fetchTodayWater
+        ? {
+            totalAmount: fetchTodayWater.totalAmount,
+            waterIntakes: fetchTodayWater.waterIntakes,
+          }
+        : {
+            totalAmount: 0,
+            waterIntakes: [],
+          };
+
       // daily steps log
       const stepLog = await prisma.stepLog.findFirst({
         where: {
@@ -133,13 +147,16 @@ class GetLogs {
         },
       });
 
+      const totalSteps = stepLog ? stepLog.totalSteps : 0;
+
       // get medicine
       const medicineLog = await prisma.medicine.findMany({
         where: {
           userId: userId,
-          date,
         },
       });
+
+      const medicine = findNearestTime(medicineLog);
 
       // get Meals
       const mealLog = await prisma.userWithMeals.findMany({
@@ -160,6 +177,20 @@ class GetLogs {
         },
       });
 
+      const sleepDate = getDateRange(2, new Date());
+
+      const sleepLog = await prisma.sleepLog.findFirst({
+        where: {
+          userId,
+          date: sleepDate.startDate,
+        },
+      });
+      let totalSleepMinutes = 0;
+
+      if (sleepLog) {
+        totalSleepMinutes = sleepLog.totalSleep;
+      }
+
       return res.status(200).json({
         date: formattedDate,
         name: getUser.name,
@@ -171,10 +202,10 @@ class GetLogs {
           calories: getUser.calories_target,
         },
         bmi,
-        steps: stepLog,
-        medicine: medicineLog,
-        waterIntake: fetchTodayWater,
-        sleepLog: "sleepLog",
+        steps: totalSteps,
+        medicine: medicine,
+        waterIntake: waterDetails,
+        sleepMinutes: totalSleepMinutes,
         meals: mealLog,
         weight: weightLogs,
       });

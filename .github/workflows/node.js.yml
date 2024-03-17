@@ -25,6 +25,7 @@ jobs:
           cache: "npm"
       - run: pm2 stop all
       - run: npm install
+      - run: npx prisma generate
       - run: pm2 restart all
       - run: |
           touch .env

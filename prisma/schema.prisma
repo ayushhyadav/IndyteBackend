@@ -332,7 +332,7 @@ model SleepIntake {
 
 model SleepLog {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  user         User          @relation(fields: [userId], references: [id])
+  user         User?          @relation(fields: [userId], references: [id])
   userId       String        @db.ObjectId
   date         String
   totalSleep   Int // Total sleep in minutes for the day
