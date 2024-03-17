@@ -9,6 +9,7 @@ import dieticianRoutes from "./routes/DieticianRoutes.js";
 import userRoutes from "./routes/UserRoutes.js";
 import genericAuth from "./controllers/auth/GenericAuthController.js";
 import authRoutes from "./routes/AuthRoutes.js";
+import errorMiddleware from "./middleware/Error.js";
 
 const app = express();
 
@@ -40,6 +41,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/dietician", dieticianRoutes);
 app.use("/api/admin", adminRoutes);
 app.post("/api/auth/websiteLogin", genericAuth.login);
+
+app.use(errorMiddleware);
 
 app.listen(3000, () => {
   console.log("server running on 3000");
