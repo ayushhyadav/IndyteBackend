@@ -30,10 +30,18 @@ class ProgressTracker {
         let burntCalories = 0;
         let finishedWorkouts = 0;
         let unfinishedWorkouts = 0;
+        let totalWorkout = 0;
 
         if (!userWorkouts.length > 0) {
           return res.status(400).json({
             message: "User workouts not found for the current " + time,
+            data: {
+              targetCalories,
+              burntCalories,
+              finishedWorkouts,
+              unfinishedWorkouts,
+              totalWorkout,
+            },
           });
         }
 
@@ -55,6 +63,7 @@ class ProgressTracker {
             burntCalories,
             finishedWorkouts,
             unfinishedWorkouts,
+            totalWorkout: finishedWorkouts + unfinishedWorkouts,
           },
         });
       };
@@ -77,7 +86,63 @@ class ProgressTracker {
         parseData(userWorkouts, date);
       };
 
-      if (validDate(date)) {
+      let yearRegex = /\b\d{4}\b/;
+      const yearlyData = async (year) => {
+        const yearlyProgress = [];
+        if (yearRegex.test(year)) {
+          for (let month = 1; month < 13; month++) {
+            const { startDate, endDate } = getDateRange(
+              30,
+              new Date(year, month)
+            );
+
+            // Retrieve user workouts within the current month
+            const userWorkouts = await prisma.userWithWorkout.findMany({
+              where: {
+                userId: user.id,
+                date: {
+                  gte: startDate,
+                  lte: endDate,
+                },
+              },
+              include: {
+                workout: true,
+              },
+            });
+
+            let targetCalories = 0;
+            let burntCalories = 0;
+            let finishedWorkouts = 0;
+            let unfinishedWorkouts = 0;
+
+            for (const userWorkout of userWorkouts) {
+              if (userWorkout.finished) {
+                burntCalories += userWorkout.workout.totalCaloriesBurnt;
+                finishedWorkouts += 1;
+              } else {
+                unfinishedWorkouts += 1;
+              }
+              targetCalories += userWorkout.workout.totalCaloriesBurnt;
+            }
+
+            // Add progress data for the current month to the yearlyProgress array
+            yearlyProgress.push({
+              month: month, // Month index starts from 0, so add 1 to make it human-readable
+              year: parseInt(year),
+              targetCalories,
+              burntCalories,
+              finishedWorkouts,
+              unfinishedWorkouts,
+              totalWorkouts: finishedWorkouts + unfinishedWorkouts,
+            });
+          }
+        }
+        return yearlyProgress;
+      };
+      if (yearRegex.test(date)) {
+        const yearlyProgress = await yearlyData(new Date(date).getFullYear());
+        return res.status(201).json(yearlyProgress);
+      } else if (validDate(date)) {
         await queryData(1, new Date(date));
       } else {
         switch (date) {
@@ -88,11 +153,12 @@ class ProgressTracker {
             await queryData(31, new Date());
             break;
           case "yearly":
-            await queryData(365, new Date());
-            break;
+            const yearlyProgress = await yearlyData(new Date().getFullYear());
+            return res.status(201).json(yearlyProgress);
           case "alltime":
             await queryData(365 * 5, new Date());
             break;
+
           default:
             return res.status(400).json({
               message:

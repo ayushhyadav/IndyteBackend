@@ -166,6 +166,7 @@ class MealController {
   static getUserMealsProgress = async (req, res) => {
     const user = req.user;
     const date = req.query.date;
+    console.log(user);
 
     try {
       if (!date)
@@ -178,16 +179,40 @@ class MealController {
         let lunch = 0;
         let dinner = 0;
         let other = 0;
+        let total = 0;
+        let completed = 0;
+        let skipped = 0;
+        let targetCalories = 0;
+        let takenCalories = 0;
+        let leftCalories = 0;
 
         if (!userMeals.length > 0) {
           return res.status(400).json({
+            status: 404,
             message: "User meals not found for the current " + time,
+            data: {
+              total,
+              completed,
+              skipped: total - completed,
+              targetCalories,
+              takenCalories,
+              leftCalories,
+              caloriesCount: {
+                breakfast,
+                lunch,
+                dinner,
+                other,
+              },
+            },
           });
         }
 
         for (const meals of userMeals) {
+          total++;
           if (meals.finished) {
+            completed++;
             if (meals.meal?.nutrition) {
+              takenCalories += meals.meal.nutrition[0]?.cal;
               switch (meals.mealTime) {
                 case "BREAKFAST":
                   breakfast += meals.meal.nutrition[0]?.cal;
@@ -203,6 +228,9 @@ class MealController {
                   break;
               }
             }
+          } else {
+            if (meals.meal?.nutrition)
+              leftCalories += meals.meal.nutrition[0]?.cal;
           }
         }
 
@@ -210,10 +238,18 @@ class MealController {
           status: 200,
           message: "User meals found for the current " + time,
           data: {
-            breakfast,
-            lunch,
-            dinner,
-            other,
+            total,
+            completed,
+            skipped: total - completed,
+            targetCalories: takenCalories + leftCalories,
+            takenCalories,
+            leftCalories,
+            caloriesCount: {
+              breakfast,
+              lunch,
+              dinner,
+              other,
+            },
           },
         });
       };
@@ -239,8 +275,11 @@ class MealController {
         });
         parseData(userMeals, date);
       };
-
-      if (validDate(date)) {
+      let yearRegex = /\b\d{4}\b/;
+      if (yearRegex.test(date)) {
+        const yearlyProgress = await yearlyData(new Date().getFullYear());
+        await queryData(365, yearlyProgress);
+      } else if (validDate(date)) {
         await queryData(1, new Date(date));
       } else {
         switch (date) {

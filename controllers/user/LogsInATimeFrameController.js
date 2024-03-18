@@ -50,23 +50,24 @@ class GetLogs {
             date: {
               startsWith: year + "-" + month,
             },
-            finished: true,
+            // finished: true,
           },
-          select: {
+          include: {
             meal: {
-              select: {
+              include: {
                 nutrition: true,
               },
             },
           },
         });
-
+        console.log(logs);
         let sum = 0;
 
         for (const log of logs) {
-          for (const meal of log.meal.nutrition) {
-            sum += meal.cal;
-          }
+          if (logs.meal?.nutrition)
+            for (const meal of log.meal.nutrition) {
+              sum += meal.cal;
+            }
         }
 
         // Assign sum of nutrition to corresponding month key
@@ -164,6 +165,13 @@ class GetLogs {
           userId,
           date,
         },
+        include: {
+          meal: {
+            include: {
+              nutrition: true,
+            },
+          },
+        },
       });
       const { startDate, endDate } = getDateRange(7, new Date());
 
@@ -191,6 +199,22 @@ class GetLogs {
         totalSleepMinutes = sleepLog.totalSleep;
       }
 
+      let calories = {
+        taken: 0,
+        left: 0,
+      };
+      if (mealLog.length > 0) {
+        for (const meals of mealLog) {
+          if (meals.finished) {
+            if (meals.meal?.nutrition)
+              calories.taken += meals.meal.nutrition[0]?.cal;
+          } else {
+            if (meals.meal?.nutrition)
+              calories.left += meals.meal.nutrition[0]?.cal;
+          }
+        }
+      }
+
       return res.status(200).json({
         date: formattedDate,
         name: getUser.name,
@@ -201,6 +225,7 @@ class GetLogs {
           step: getUser.step_target,
           calories: getUser.calories_target,
         },
+        calories,
         bmi,
         steps: totalSteps,
         medicine: medicine,
