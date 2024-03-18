@@ -65,7 +65,6 @@ export const onlyUser = async (req, res, next) => {
     });
     if (!response) return res.status(401).json({ message: "User only" });
 
-    console.log(response);
     req.user = decoded;
     next();
   } catch (error) {

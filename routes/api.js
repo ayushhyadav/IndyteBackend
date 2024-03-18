@@ -216,5 +216,6 @@ router.get("/all-workout-stats", WorkoutStatsController.getAllTimeWorkoutData);
 
 // getDashboardStats
 router.get("/dashboard", onlyUser, GetLogs.getDashboard);
+router.get("/caloriesProgress", onlyUser, ProgressTracker.caloriesTracker);
 
 export default router;

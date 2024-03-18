@@ -1077,6 +1077,160 @@ class ProgressTracker {
   //         })
   //     }
   // }
+
+  static caloriesTracker = async (req, res) => {
+    try {
+      const user = req.user;
+      const date = req.query.date;
+      if (!date)
+        return res.status(400).json({
+          message: "Date not found",
+        });
+      let caloriesTracker = {
+        startDate: null,
+        endDate: null,
+        caloriesGained: 0,
+        caloriesBurnt: 0,
+        mealActivity: {
+          breakfast: {
+            calories: 0,
+            percent: 0,
+          },
+          lunch: {
+            calories: 0,
+            percent: 0,
+          },
+          dinner: {
+            calories: 0,
+            percent: 0,
+          },
+          other: {
+            calories: 0,
+            percent: 0,
+          },
+        },
+        workout: [],
+        graph: {
+          caloriesBurnt: [],
+          caloriesGain: [],
+        },
+      };
+      const queryData = async (duration, currentDate) => {
+        const { startDate, endDate } = getDateRange(duration, currentDate);
+        let yearRegex = /\b\d{4}\b/;
+
+        caloriesTracker.startDate = startDate;
+        caloriesTracker.endDate = endDate;
+
+        const workout = await prisma.userWithWorkout.findMany({
+          where: {
+            userId: user.id,
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          include: {
+            workout: true,
+          },
+        });
+        workout.forEach((e) => {
+          caloriesTracker.workout.push(e.workout);
+          if (e.finished == true) {
+            caloriesTracker.caloriesBurnt += e.workout?.totalCaloriesBurnt ?? 0;
+            caloriesTracker.graph.caloriesBurnt.push({
+              time: e.workout?.updatedAt,
+              quantity: e.workout?.totalCaloriesBurnt,
+            });
+          }
+        });
+
+        const userMeals = await prisma.userWithMeals.findMany({
+          where: {
+            userId: user.id,
+            date: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          include: {
+            meal: {
+              include: {
+                nutrition: true,
+              },
+            },
+          },
+        });
+
+        console.log(userMeals);
+
+        userMeals.forEach((meals) => {
+          if (meals.finished) {
+            if (meals.meal?.nutrition) {
+              caloriesTracker.caloriesGained += meals.meal.nutrition[0]?.cal;
+              caloriesTracker.graph.caloriesGain.push({
+                time: meals.updatedAt,
+                quantity: meals.meal.nutrition[0]?.cal,
+              });
+              switch (meals.mealTime) {
+                case "BREAKFAST":
+                  caloriesTracker.mealActivity.breakfast.calories +=
+                    meals.meal.nutrition[0]?.cal;
+                  break;
+                case "LUNCH":
+                  caloriesTracker.mealActivity.lunch.calories +=
+                    meals.meal.nutrition[0]?.cal;
+                  break;
+                case "DINNER":
+                  caloriesTracker.mealActivity.dinner.calories +=
+                    meals.meal.nutrition[0]?.cal;
+                  break;
+                default:
+                  caloriesTracker.mealActivity.other.calories +=
+                    meals.meal.nutrition[0]?.cal;
+                  break;
+              }
+            }
+          }
+        });
+
+        caloriesTracker.mealActivity.breakfast.percent =
+          (caloriesTracker.mealActivity.breakfast.calories * 100) /
+          caloriesTracker.caloriesGained;
+        caloriesTracker.mealActivity.lunch.percent =
+          (caloriesTracker.mealActivity.lunch.calories * 100) /
+          caloriesTracker.caloriesGained;
+        caloriesTracker.mealActivity.dinner.percent =
+          (caloriesTracker.mealActivity.dinner.calories * 100) /
+          caloriesTracker.caloriesGained;
+        caloriesTracker.mealActivity.other.percent =
+          (caloriesTracker.mealActivity.other.calories * 100) /
+          caloriesTracker.caloriesGained;
+
+        return res.status(200).json(caloriesTracker);
+      };
+
+      switch (date) {
+        case "daily":
+          await queryData(1, new Date());
+          break;
+        case "weekly":
+          await queryData(7, new Date());
+          break;
+        case "monthly":
+          await queryData(30, new Date());
+          break;
+        case "yearly":
+          await queryData(365, new Date());
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid date format" });
+      }
+    } catch (error) {
+      console.log(error.message);
+      return res.status(500).json({ message: "internal server error" });
+    }
+  };
 }
 
 export default ProgressTracker;
