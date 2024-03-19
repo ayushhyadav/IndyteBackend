@@ -9,6 +9,7 @@ import errorMiddleware from "./middleware/Error.js";
 import Upload from "./controllers/upload/Upload.js";
 import fileUpload from "express-fileupload";
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

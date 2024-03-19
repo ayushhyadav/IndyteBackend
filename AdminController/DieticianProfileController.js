@@ -35,6 +35,7 @@ class DeiticianProfileController {
       });
     } catch (error) {
       console.log("The error is", error);
+      return res.status(400).json({ error: error.message });
     }
   }
 

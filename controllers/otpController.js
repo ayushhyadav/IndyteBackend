@@ -1,5 +1,4 @@
 import otpValidate from "../helpers/otpValidate.js";
-import otpgen from "otp-generator";
 import Twilio from "twilio";
 const accountSid = "AC00611250c27880073ef08129ede99689";
 const authToken = "15a74c2d4d1f0c2393114f582e513eff";

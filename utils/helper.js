@@ -1,7 +1,6 @@
 import { supportedMimes } from "../config/filesystem.js";
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
-
+import { v4 as randomString } from "uuid";
+import sharp from "sharp";
 export const imageValidator = (size, mime) => {
   if (bytesToMb(size) > 2) {
     return "Image size must be less than 2 MB";
@@ -12,12 +11,28 @@ export const imageValidator = (size, mime) => {
   return null;
 };
 
+export const validateImage = async (image) => {
+  try {
+    const buffer = await sharp(image.data)
+      .resize({ width: 1080, fit: sharp.fit.cover })
+      .toBuffer();
+    return {
+      key: randomString(),
+      ContentType: image.mimetype,
+      Body: buffer,
+    };
+  } catch (error) {
+    console.log(error);
+    return { error: error.message };
+  }
+};
+
 export const bytesToMb = (bytes) => {
   return bytes / (1024 * 1024);
 };
 
 export const generateRandomNum = () => {
-  return uuidv4();
+  return randomString();
 };
 
 // export const getImageUrl = (imgName) => {
