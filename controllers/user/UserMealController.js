@@ -24,7 +24,7 @@ class UserMealController {
       if (!userWithMeals) {
         return res.status(400).json({
           status: 400,
-          message: "Meal dont exist for given user at given time",
+          message: "Meal doesn't exist for given user at given time",
         });
       }
 
@@ -48,9 +48,9 @@ class UserMealController {
         },
         data: {
           finished: true,
-          imgUrl,
-          comment,
-          review,
+          imgUrl: imgUrl || null,
+          comment: comment || null,
+          review: review || null,
         },
       });
 
