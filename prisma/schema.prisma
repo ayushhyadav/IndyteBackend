@@ -276,7 +276,7 @@ model WaterIntake {
   amount     Int
   recordedAt DateTime
 
-  -------Id String?   @db.ObjectId
+  waterLogId String?   @db.ObjectId
   waterLog   WaterLog? @relation(fields: [waterLogId], references: [id])
 
   @@index([userId, recordedAt])
