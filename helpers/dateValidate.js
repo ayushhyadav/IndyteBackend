@@ -5,7 +5,8 @@ import {
   parse,
   endOfDay,
   startOfDay,
-  differenceInMilliseconds,
+  compareAsc,
+  formatDistance,
   subDays,
 } from "date-fns";
 
@@ -51,9 +52,30 @@ export const findNearestTime = (times) => {
   const index = sortedTime.findIndex(
     (time) => time.currentTime === currentMilliseconds
   );
+  const nextTime = (time) => {
+    let parsedTime = parse(time, "h:mm a", new Date());
+    if (compareAsc(new Date(), parsedTime) == 1) {
+      parsedTime = addDays(parsedTime, 1);
+    }
+    const formatD = formatDistance(parsedTime, new Date());
+    return formatD;
+  };
+
   if (index == sortedTime.length - 1)
-    return { total, finished, nextMedicine: sortedTime[0] };
-  else return { total, finished, nextMedicine: sortedTime[index + 1] };
+    return {
+      total,
+      finished,
+      nextMedicine: { in: nextTime(sortedTime[0].time), ...sortedTime[0] },
+    };
+  else
+    return {
+      total,
+      finished,
+      nextMedicine: {
+        in: nextTime(sortedTime[index + 1].time),
+        ...sortedTime[index + 1],
+      },
+    };
 };
 
 export const isValidObjectId = (str) => {

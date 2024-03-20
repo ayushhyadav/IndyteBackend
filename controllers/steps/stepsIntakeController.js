@@ -1,52 +1,48 @@
 import prisma from "../../db/db.config.js";
+import {
+  stepSchema,
+  validatorCompile,
+} from "../../validations/authValidation.js";
+import { formatDate } from "../../helpers/dateValidate.js";
 
 class stepsIntakeController {
   static async createStepIntake(req, res) {
     try {
-      const {
-        userId,
-        stepsTaken,
-        recordedAt,
-        timeInMins,
-        distance,
-        caloriesBurned,
-      } = req.body;
-
-      // Create or update the corresponding step log
-      const date = new Date(recordedAt).toISOString().split("T")[0]; // Extract the date "2023-12-24"
+      const validator = await validatorCompile(stepSchema, req.body);
+      if (validator.error)
+        return res.status(400).json({ message: validator.error });
+      const date = formatDate(validator.recordedAt);
       let stepLog;
 
       const existingStepLog = await prisma.stepLog.findFirst({
         where: {
-          userId,
-          date,
+          userId: validator.userId,
+          date: date,
         },
       });
 
       if (existingStepLog) {
-        // If step log exists for the day, update the totals
         await prisma.stepLog.update({
           where: { id: existingStepLog.id },
           data: {
-            totalSteps: existingStepLog.totalSteps + stepsTaken,
+            totalSteps: existingStepLog.totalSteps + validator.stepsTaken,
             totalCaloriesBurned:
-              existingStepLog.totalCaloriesBurned + caloriesBurned,
-            totalDistance: existingStepLog.totalDistance + distance,
+              existingStepLog.totalCaloriesBurned + validator.caloriesBurned,
+            totalDistance: existingStepLog.totalDistance + validator.distance,
             totalTimeWalkedMins:
-              existingStepLog.totalTimeWalkedMins + timeInMins,
+              existingStepLog.totalTimeWalkedMins + validator.timeInMins,
           },
         });
         stepLog = existingStepLog;
       } else {
-        // If step log doesn't exist for the day, create a new one
         stepLog = await prisma.stepLog.create({
           data: {
-            userId,
-            date,
-            totalSteps: stepsTaken,
-            totalCaloriesBurned: caloriesBurned,
-            totalDistance: distance,
-            totalTimeWalkedMins: timeInMins,
+            userId: validator.userId,
+            date: date,
+            totalSteps: validator.stepsTaken,
+            totalCaloriesBurned: validator.caloriesBurned,
+            totalDistance: validator.distance,
+            totalTimeWalkedMins: validator.timeInMins,
           },
         });
       }
@@ -54,12 +50,12 @@ class stepsIntakeController {
       // Create the step intake record and associate it with the step log
       const stepIntake = await prisma.stepIntake.create({
         data: {
-          user: { connect: { id: userId } },
-          stepsTaken,
-          recordedAt,
-          timeInMins,
-          distance,
-          caloriesBurned,
+          user: { connect: { id: validator.userId } },
+          stepsTaken: validator.stepsTaken,
+          recordedAt: validator.recordedAt,
+          timeInMins: validator.timeInMins,
+          distance: validator.distance,
+          caloriesBurned: validator.caloriesBurned,
           stepLog: {
             connect: {
               id: stepLog.id,
@@ -67,11 +63,10 @@ class stepsIntakeController {
           },
         },
       });
-
       res.status(201).json(stepIntake);
     } catch (error) {
       console.error("Error creating step intake:", error);
-      res.status(500).json({ error: "Failed to create step intake record" });
+      res.status(500).json({ error: error.message });
     }
   }
 }
