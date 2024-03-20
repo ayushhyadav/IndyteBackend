@@ -35,10 +35,8 @@ export default class BannerController {
           caption: name || uploadImage[0].key,
         },
       };
-
       const command = new PutObjectCommand(params);
       const response = await s3.send(command);
-
       if (response) {
         await prisma.banner.create({
           data: {

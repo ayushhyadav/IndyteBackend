@@ -117,8 +117,8 @@ router.delete(
 // steps
 
 router.post("/steps-intake", stepsIntakeController.createStepIntake);
-
 router.get("/steps-logs/:userId/:date", StepsLogController.getStepsLog);
+
 
 // sleep wali bakchodiyan
 

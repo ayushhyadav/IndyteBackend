@@ -150,6 +150,17 @@ model Banner {
   updatedAt DateTime @updatedAt
 }
 
+model ProgressPhoto {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  userId String @db.ObjectId
+  imgLink String
+  date String
+  facing String
+  mimetype String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Nutrition {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   meal    Meal?  @relation(fields: [id], references: [id])

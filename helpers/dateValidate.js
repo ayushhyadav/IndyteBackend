@@ -55,3 +55,7 @@ export const findNearestTime = (times) => {
     return { total, finished, nextMedicine: sortedTime[0] };
   else return { total, finished, nextMedicine: sortedTime[index + 1] };
 };
+
+export const isValidObjectId = (str) => {
+  return /^[0-9a-fA-F]{24}$/.test(str);
+};

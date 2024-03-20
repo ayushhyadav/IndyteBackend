@@ -20,6 +20,7 @@ export const validateImage = async (image) => {
       key: randomString(),
       ContentType: image.mimetype,
       Body: buffer,
+      Facing: image.facing,
     };
   } catch (error) {
     console.log(error);

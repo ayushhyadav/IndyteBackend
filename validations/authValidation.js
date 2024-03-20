@@ -15,6 +15,11 @@ export const registerSchema = vine.object({
   profile: vine.string().optional(),
 });
 
+export const dateMonthScheme = vine.object({
+  month: vine.number().min(1).max(12),
+  year: vine.number().min(1900).max(2100),
+});
+
 export const updateSchema = vine.object({
   height: vine.number().optional(),
   height_unit: vine.string().optional(),
@@ -85,6 +90,8 @@ export const tokenValidate = vine.object({
   email: vine.string(),
   role: vine.string(),
 });
+
+
 
 export const validatorCompile = async (compile, validate) => {
   try {
