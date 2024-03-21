@@ -92,9 +92,6 @@ class GetLogs {
       const { id } = req.user;
       const formatString = "EEEE dd MMM";
 
-      // const userId = "65dac6cf0eecc6919e18f319";
-      // const date = "2024-03-12";
-
       const date = formatDate(new Date());
       const userId = id;
       const formattedDate = format(date, formatString);
@@ -154,6 +151,7 @@ class GetLogs {
       const medicineLog = await prisma.medicine.findMany({
         where: {
           userId: userId,
+          date,
         },
       });
 

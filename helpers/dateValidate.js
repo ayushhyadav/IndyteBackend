@@ -65,7 +65,7 @@ export const findNearestTime = (times) => {
     return {
       total,
       finished,
-      nextMedicine: { in: nextTime(sortedTime[0].time), ...sortedTime[0] },
+      nextMedicine: null,
     };
   else
     return {
