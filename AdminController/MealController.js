@@ -1,5 +1,5 @@
 import prisma from "../db/db.config.js";
-import { validDate, getDateRange } from "../helpers/dateValidate.js";
+import { validDate, getDateRange, isValidObjectId } from "../helpers/dateValidate.js";
 
 class MealController {
   static async register(req, res) {
@@ -164,9 +164,15 @@ class MealController {
     }
   }
   static getUserMealsProgress = async (req, res) => {
-    const user = req.user;
-    const date = req.query.date;
     try {
+      const user = req.user;
+      const date = req.query.date;
+      if (user.role == "admin" || user.role == "dietician") {
+        if (!isValidObjectId(req.params.id)) {
+          return res.status(400).json({ message: "Invalid user id" });
+        }
+        user.id = req.params.id;
+      }
       if (!date)
         return res.status(400).json({
           message: "Date not found",

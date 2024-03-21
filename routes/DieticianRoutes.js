@@ -7,6 +7,7 @@ import auth, {
   onlyUser,
 } from "../middleware/Authenticate.js";
 const dieticianRoutes = Router();
+import DieticianController from "../controllers/dietician/DieticianController.js";
 
 // auth dietician routes
 
@@ -34,5 +35,7 @@ dieticianRoutes.delete(
   onlyAdmin,
   DieticianAuthController.deleteDietician
 );
+
+dieticianRoutes.get("/getClient", onlyDietician, DieticianController.getClient);
 
 export default dieticianRoutes;

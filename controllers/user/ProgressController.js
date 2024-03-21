@@ -1,5 +1,9 @@
 import prisma from "../../db/db.config.js";
-import { validDate, getDateRange } from "../../helpers/dateValidate.js";
+import {
+  validDate,
+  getDateRange,
+  isValidObjectId,
+} from "../../helpers/dateValidate.js";
 import {
   subWeeks,
   startOfWeek,
@@ -20,10 +24,15 @@ class ProgressTracker {
   //workout progress
 
   static getUserWorkoutProgress = async (req, res) => {
-    const user = req.user;
-    const date = req.query.date;
-
     try {
+      const user = req.user;
+      const date = req.query.date;
+      if (user.role == "admin" || user.role == "dietician") {
+        if (!isValidObjectId(req.params.id)) {
+          return res.status(400).json({ message: "Invalid user id" });
+        }
+        user.id = req.params.id;
+      }
       if (!date)
         return res.status(400).json({
           message: "Date not found",
@@ -1086,10 +1095,17 @@ class ProgressTracker {
     try {
       const user = req.user;
       const date = req.query.date;
+      if (user.role == "admin" || user.role == "dietician") {
+        if (!isValidObjectId(req.params.id)) {
+          return res.status(400).json({ message: "Invalid user id" });
+        }
+        user.id = req.params.id;
+      }
       if (!date)
         return res.status(400).json({
           message: "Date not found",
         });
+
       let caloriesTracker = {
         startDate: null,
         endDate: null,
@@ -1297,47 +1313,62 @@ class ProgressTracker {
         });
         return parseWeeks;
       };
+      let yearRegex = /\b\d{4}\b/;
 
       // work on monthly and yearly
-      switch (date) {
-        case "daily":
-          caloriesTracker = await queryData(1, new Date());
-          return res.status(200).json(caloriesTracker);
-          break;
-        case "weekly":
-          caloriesTracker = await queryData(7, new Date());
-          caloriesTracker.graph.caloriesBurnt = parseWeekData(
-            caloriesTracker.graph.caloriesBurnt
-          );
-          caloriesTracker.graph.caloriesGain = parseWeekData(
-            caloriesTracker.graph.caloriesGain
-          );
-          return res.status(200).json(caloriesTracker);
-          break;
-        case "monthly":
-          caloriesTracker = await queryData(30, new Date());
-          caloriesTracker.graph.caloriesBurnt = parseMonthData(
-            caloriesTracker.graph.caloriesBurnt,
-            { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
-          );
-          caloriesTracker.graph.caloriesGain = parseMonthData(
-            caloriesTracker.graph.caloriesGain,
-            { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
-          );
-          return res.status(200).json(caloriesTracker);
-          break;
-        case "yearly":
-          caloriesTracker = await queryData(365, new Date());
-          caloriesTracker.graph.caloriesBurnt = parseYear(
-            caloriesTracker.graph.caloriesBurnt
-          );
-          caloriesTracker.graph.caloriesGain = parseYear(
-            caloriesTracker.graph.caloriesGain
-          );
-          return res.status(200).json(caloriesTracker);
-          break;
-        default:
-          return res.status(400).json({ message: "Invalid date format" });
+      if (yearRegex.test(date) && date < 9999) {
+        const yearlyProgress = await queryData(365, new Date(date, 12));
+        yearlyProgress.graph.caloriesBurnt = parseYear(
+          yearlyProgress.graph.caloriesBurnt
+        );
+        yearlyProgress.graph.caloriesGain = parseYear(
+          yearlyProgress.graph.caloriesGain
+        );
+        return res.status(201).json(yearlyProgress);
+      } else if (validDate(date)) {
+        const caloriesTracker = await queryData(1, new Date(date));
+        return res.status(200).json(caloriesTracker);
+      } else {
+        switch (date) {
+          case "daily":
+            caloriesTracker = await queryData(1, new Date());
+            return res.status(200).json(caloriesTracker);
+            break;
+          case "weekly":
+            caloriesTracker = await queryData(7, new Date());
+            caloriesTracker.graph.caloriesBurnt = parseWeekData(
+              caloriesTracker.graph.caloriesBurnt
+            );
+            caloriesTracker.graph.caloriesGain = parseWeekData(
+              caloriesTracker.graph.caloriesGain
+            );
+            return res.status(200).json(caloriesTracker);
+            break;
+          case "monthly":
+            caloriesTracker = await queryData(30, new Date());
+            caloriesTracker.graph.caloriesBurnt = parseMonthData(
+              caloriesTracker.graph.caloriesBurnt,
+              { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
+            );
+            caloriesTracker.graph.caloriesGain = parseMonthData(
+              caloriesTracker.graph.caloriesGain,
+              { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
+            );
+            return res.status(200).json(caloriesTracker);
+            break;
+          case "yearly":
+            caloriesTracker = await queryData(365, new Date());
+            caloriesTracker.graph.caloriesBurnt = parseYear(
+              caloriesTracker.graph.caloriesBurnt
+            );
+            caloriesTracker.graph.caloriesGain = parseYear(
+              caloriesTracker.graph.caloriesGain
+            );
+            return res.status(200).json(caloriesTracker);
+            break;
+          default:
+            return res.status(400).json({ message: "Invalid date format" });
+        }
       }
     } catch (error) {
       console.log(error.message);

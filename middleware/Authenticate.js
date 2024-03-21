@@ -77,13 +77,36 @@ export const allUser = async (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.user == "admin" || "dietician" || "user") {
+    if (
+      decoded.role == "admin" ||
+      decoded.role == "dietician" ||
+      decoded.role == "user"
+    ) {
       req.user = decoded;
       next();
     } else
       return res
         .status(401)
         .json({ message: "Authenticated user or dietician or admin only" });
+  } catch (error) {
+    res.status(401).json({ message: error.message });
+  }
+};
+
+export const adminOrDietician = async (req, res, next) => {
+  if (!req.headers.authorization && !req.authorization?.startsWith("Bearer"))
+    return res.status(401).json({ message: "No Token" });
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(decoded)
+    if (decoded.role == "admin" || decoded.role == "dietician") {
+      req.user = decoded;
+      next();
+    } else
+      return res
+        .status(401)
+        .json({ message: "Authenticated dietician or admin only" });
   } catch (error) {
     res.status(401).json({ message: error.message });
   }

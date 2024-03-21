@@ -1,6 +1,9 @@
 import { Router } from "express";
 import AuthController from "../controllers/user/AuthController.js";
-import authMiddleware, { onlyUser } from "../middleware/Authenticate.js";
+import authMiddleware, {
+  onlyUser,
+  adminOrDietician,
+} from "../middleware/Authenticate.js";
 
 import ProfileController from "../controllers/ProfileController.js";
 import DeiticianProfileController from "../AdminController/DieticianProfileController.js";
@@ -119,7 +122,6 @@ router.delete(
 router.post("/steps-intake", stepsIntakeController.createStepIntake);
 router.get("/steps-logs/:userId/:date", StepsLogController.getStepsLog);
 
-
 // sleep wali bakchodiyan
 
 router.post("/sleep-intake", sleepIntakeController.createSleepIntake);
@@ -156,8 +158,20 @@ router.get(
 );
 
 router.get(
+  "/getusermealprogress/:id",
+  adminOrDietician,
+  MealController.getUserMealsProgress
+);
+
+router.get(
   "/getuserworkoutprogress",
   onlyUser,
+  ProgressTracker.getUserWorkoutProgress
+);
+
+router.get(
+  "/getuserworkoutprogress/:id",
+  adminOrDietician,
   ProgressTracker.getUserWorkoutProgress
 );
 
@@ -217,5 +231,10 @@ router.get("/all-workout-stats", WorkoutStatsController.getAllTimeWorkoutData);
 // getDashboardStats
 router.get("/dashboard", onlyUser, GetLogs.getDashboard);
 router.get("/caloriesProgress", onlyUser, ProgressTracker.caloriesTracker);
+router.get(
+  "/caloriesProgress/:id",
+  adminOrDietician,
+  ProgressTracker.caloriesTracker
+);
 
 export default router;
