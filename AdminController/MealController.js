@@ -166,8 +166,6 @@ class MealController {
   static getUserMealsProgress = async (req, res) => {
     const user = req.user;
     const date = req.query.date;
-    console.log(user);
-
     try {
       if (!date)
         return res.status(400).json({
@@ -254,6 +252,110 @@ class MealController {
         });
       };
 
+      const yearlyData = async (year) => {
+        const yearlyProgress = [];
+
+        for (let month = 1; month < 13; month++) {
+          const { startDate, endDate } = getDateRange(
+            30,
+            new Date(year, month)
+          );
+
+          // Retrieve user workouts within the current month
+          const userMeals = await prisma.userWithMeals.findMany({
+            where: {
+              userId: user.id,
+              date: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+            include: {
+              meal: {
+                include: {
+                  nutrition: true,
+                },
+              },
+            },
+          });
+
+          let breakfast = 0;
+          let lunch = 0;
+          let dinner = 0;
+          let other = 0;
+          let total = 0;
+          let completed = 0;
+          let skipped = 0;
+          let targetCalories = 0;
+          let takenCalories = 0;
+          let leftCalories = 0;
+
+          if (!userMeals.length > 0) {
+            yearlyProgress.push({
+              month: month, // Month index starts from 0, so add 1 to make it human-readable
+              year: parseInt(year),
+              total,
+              completed,
+              skipped: total - completed,
+              targetCalories,
+              takenCalories,
+              leftCalories,
+              caloriesCount: {
+                breakfast,
+                lunch,
+                dinner,
+                other,
+              },
+            });
+          } else {
+            for (const meals of userMeals) {
+              total++;
+              if (meals.finished) {
+                completed++;
+                if (meals.meal?.nutrition) {
+                  takenCalories += meals.meal.nutrition[0]?.cal;
+                  switch (meals.mealTime) {
+                    case "BREAKFAST":
+                      breakfast += meals.meal.nutrition[0]?.cal;
+                      break;
+                    case "LUNCH":
+                      lunch += meals.meal.nutrition[0]?.cal;
+                      break;
+                    case "DINNER":
+                      dinner += meals.meal.nutrition[0]?.cal;
+                      break;
+                    default:
+                      other += meals.meal.nutrition[0]?.cal;
+                      break;
+                  }
+                }
+              } else {
+                if (meals.meal?.nutrition)
+                  leftCalories += meals.meal.nutrition[0]?.cal;
+              }
+            }
+
+            yearlyProgress.push({
+              month: month, // Month index starts from 0, so add 1 to make it human-readable
+              year: parseInt(year),
+              total,
+              completed,
+              skipped: total - completed,
+              targetCalories: takenCalories + leftCalories,
+              takenCalories,
+              leftCalories,
+              caloriesCount: {
+                breakfast,
+                lunch,
+                dinner,
+                other,
+              },
+            });
+          }
+        }
+        return res.status(200).json(yearlyProgress);
+      };
+
       const queryData = async (days, currentDate) => {
         const { startDate, endDate } = getDateRange(days, currentDate);
 
@@ -275,11 +377,11 @@ class MealController {
         });
         parseData(userMeals, date);
       };
-      let yearRegex = /\b\d{4}\b/;
-      if (yearRegex.test(date)) {
-        const yearlyProgress = await yearlyData(new Date().getFullYear());
-        await queryData(365, yearlyProgress);
+
+      if (date > 1000 && date < 4000) {
+        await yearlyData(date);
       } else if (validDate(date)) {
+        console.log("he");
         await queryData(1, new Date(date));
       } else {
         switch (date) {

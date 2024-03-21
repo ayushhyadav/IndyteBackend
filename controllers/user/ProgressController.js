@@ -10,6 +10,8 @@ import {
   endOfDay,
   startOfDay,
   subDays,
+  daysToWeeks,
+  eachWeekOfInterval,
 } from "date-fns";
 
 class ProgressTracker {
@@ -139,7 +141,7 @@ class ProgressTracker {
         }
         return yearlyProgress;
       };
-      if (yearRegex.test(date)) {
+      if (yearRegex.test(date) && date < 9999) {
         const yearlyProgress = await yearlyData(new Date(date).getFullYear());
         return res.status(201).json(yearlyProgress);
       } else if (validDate(date)) {
@@ -1115,6 +1117,7 @@ class ProgressTracker {
           caloriesGain: [],
         },
       };
+
       const queryData = async (duration, currentDate) => {
         const { startDate, endDate } = getDateRange(duration, currentDate);
         let yearRegex = /\b\d{4}\b/;
@@ -1162,8 +1165,6 @@ class ProgressTracker {
           },
         });
 
-        console.log(userMeals);
-
         userMeals.forEach((meals) => {
           if (meals.finished) {
             if (meals.meal?.nutrition) {
@@ -1207,21 +1208,49 @@ class ProgressTracker {
           (caloriesTracker.mealActivity.other.calories * 100) /
           caloriesTracker.caloriesGained;
 
-        return res.status(200).json(caloriesTracker);
+        return caloriesTracker;
       };
 
+      const dateToWeek = (date) => format(date, "EEEE");
+      function parseWeekData(date) {
+        const totalCalories = {
+          Monday: 0,
+          Tuesday: 0,
+          Wednesday: 0,
+          Thursday: 0,
+          Friday: 0,
+          Saturday: 0,
+          Sunday: 0,
+        };
+        date.forEach((day) => {
+          const parseDate = dateToWeek(day.time);
+          totalCalories[parseDate] += day.quantity;
+        });
+        return totalCalories;
+      }
+
+      // work on monthly and yearly
       switch (date) {
         case "daily":
-          await queryData(1, new Date());
+          caloriesTracker = await queryData(1, new Date());
+          return res.status(200).json(caloriesTracker);
           break;
         case "weekly":
-          await queryData(7, new Date());
+          caloriesTracker = await queryData(7, new Date());
+          return res.status(200).json(caloriesTracker);
           break;
         case "monthly":
-          await queryData(30, new Date());
+          caloriesTracker = await queryData(30, new Date());
+          const eachWeek = eachWeekOfInterval({
+            start: getDateRange(30, new Date()).startDate,
+            end: getDateRange(30, new Date()).endDate,
+          });
+          console.log(eachWeek, "This");
+          return res.status(200).json(caloriesTracker);
           break;
         case "yearly":
-          await queryData(365, new Date());
+          caloriesTracker = await queryData(365, new Date());
+          return res.status(200).json(caloriesTracker);
           break;
         default:
           return res.status(400).json({ message: "Invalid date format" });
