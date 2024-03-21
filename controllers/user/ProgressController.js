@@ -12,6 +12,8 @@ import {
   subDays,
   daysToWeeks,
   eachWeekOfInterval,
+  isSameISOWeek,
+  isWithinInterval,
 } from "date-fns";
 
 class ProgressTracker {
@@ -1211,6 +1213,33 @@ class ProgressTracker {
         return caloriesTracker;
       };
 
+      const dateToMonth = (date) => format(date, "LLLL");
+      const parseYear = (data) => {
+        const yearlyData = {
+          January: 0,
+          February: 0,
+          March: 0,
+          April: 0,
+          May: 0,
+          June: 0,
+          July: 0,
+          August: 0,
+          September: 0,
+          October: 0,
+          November: 0,
+          December: 0,
+        };
+
+        data.forEach((day) => {
+          const parseDate = dateToMonth(day.time);
+          yearlyData[parseDate] += day.quantity;
+        });
+        const week = Object.entries(yearlyData).map(([day, quantity]) => {
+          return { month: day, quantity: quantity };
+        });
+
+        return week;
+      };
       const dateToWeek = (date) => format(date, "EEEE");
       function parseWeekData(date) {
         const totalCalories = {
@@ -1226,8 +1255,48 @@ class ProgressTracker {
           const parseDate = dateToWeek(day.time);
           totalCalories[parseDate] += day.quantity;
         });
-        return totalCalories;
+        const week = Object.entries(totalCalories).map(([day, quantity]) => {
+          return { day: day, quantity: quantity };
+        });
+
+        return week;
       }
+
+      const parseMonthData = (graph, { start, end }) => {
+        const weeks = eachWeekOfInterval({
+          start,
+          end,
+        });
+        const parseWeeks = weeks.map((i, n) => {
+          return { week: i, quantity: 0 };
+        });
+
+        graph.map((e) => {
+          for (let i = 0; i < parseWeeks.length; i++) {
+            if (i == parseWeeks.length - 1) {
+              if (
+                isWithinInterval(e.time, {
+                  start: parseWeeks[i].week,
+                  end,
+                })
+              ) {
+                parseWeeks[i].quantity += e.quantity;
+                break;
+              }
+            }
+            if (
+              isWithinInterval(e.time, {
+                start: parseWeeks[i].week,
+                end: parseWeeks[i + 1].week,
+              })
+            ) {
+              parseWeeks[i].quantity += e.quantity;
+              break;
+            }
+          }
+        });
+        return parseWeeks;
+      };
 
       // work on monthly and yearly
       switch (date) {
@@ -1237,19 +1306,34 @@ class ProgressTracker {
           break;
         case "weekly":
           caloriesTracker = await queryData(7, new Date());
+          caloriesTracker.graph.caloriesBurnt = parseWeekData(
+            caloriesTracker.graph.caloriesBurnt
+          );
+          caloriesTracker.graph.caloriesGain = parseWeekData(
+            caloriesTracker.graph.caloriesGain
+          );
           return res.status(200).json(caloriesTracker);
           break;
         case "monthly":
           caloriesTracker = await queryData(30, new Date());
-          const eachWeek = eachWeekOfInterval({
-            start: getDateRange(30, new Date()).startDate,
-            end: getDateRange(30, new Date()).endDate,
-          });
-          console.log(eachWeek, "This");
+          caloriesTracker.graph.caloriesBurnt = parseMonthData(
+            caloriesTracker.graph.caloriesBurnt,
+            { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
+          );
+          caloriesTracker.graph.caloriesGain = parseMonthData(
+            caloriesTracker.graph.caloriesGain,
+            { start: caloriesTracker.startDate, end: caloriesTracker.endDate }
+          );
           return res.status(200).json(caloriesTracker);
           break;
         case "yearly":
           caloriesTracker = await queryData(365, new Date());
+          caloriesTracker.graph.caloriesBurnt = parseYear(
+            caloriesTracker.graph.caloriesBurnt
+          );
+          caloriesTracker.graph.caloriesGain = parseYear(
+            caloriesTracker.graph.caloriesGain
+          );
           return res.status(200).json(caloriesTracker);
           break;
         default:
