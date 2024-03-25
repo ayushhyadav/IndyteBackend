@@ -179,6 +179,7 @@ model Dietician {
   address       String
   aadhar        String
   pan           String
+  profile       String?
   other_doc     String
   certificate   String
   work_exp      String
@@ -196,6 +197,7 @@ model Admin {
   name          String
   logo          String?
   address       String  
+  profile       String?
   company String?
   company_details       String?  
   company_address       String?  
