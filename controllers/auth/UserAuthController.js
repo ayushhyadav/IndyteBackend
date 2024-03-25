@@ -92,8 +92,8 @@ export default class UserAuthController {
         const token = await generateToken({ ...user, role: "user" });
         return res.status(201).json({
           status:200,
-          ...all,
-          access_token: `Bearer ${token}`,
+          user:{...all},
+          token: `Bearer ${token}`,
           role: "user",
         });
       }
