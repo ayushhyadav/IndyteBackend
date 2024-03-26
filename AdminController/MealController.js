@@ -191,7 +191,7 @@ class MealController {
         let leftCalories = 0;
 
         if (!userMeals.length > 0) {
-          return res.status(400).json({
+          return res.status(200).json({
             status: 200,
             message: "User meals not found for the current " + time,
             data: {
