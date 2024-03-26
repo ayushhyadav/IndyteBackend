@@ -5,14 +5,14 @@ export const registerSchema = vine.object({
   email: vine.string().email(),
   phone: vine.string().minLength(13).maxLength(13),
   password: vine.string().minLength(6).maxLength(100),
-  height: vine.string().nullable().optional(),
-  height_unit: vine.string().nullable().optional(),
-  weight: vine.string().nullable().optional(),
-  weight_unit: vine.string().nullable().optional(),
-  date_of_birth: vine.string().nullable().optional(),
-  gender: vine.string().nullable().optional(),
-  goal: vine.string().nullable().optional(),
-  profile: vine.string().nullable().optional(),
+  height: vine.string().nullable().optional(e=>e??null),
+  height_unit: vine.string().nullable().optional(e=>e??null),
+  weight: vine.string().nullable().optional(e=>e??null),
+  weight_unit: vine.string().nullable().optional(e=>e??null),
+  date_of_birth: vine.string().nullable().optional(e=>e??null),
+  gender: vine.string().nullable().optional(e=>e??null),
+  goal: vine.string().nullable().optional(e=>e??null),
+  profile: vine.string().nullable().optional(e=>e??null),
 });
 
 export const stepSchema = vine.object({
