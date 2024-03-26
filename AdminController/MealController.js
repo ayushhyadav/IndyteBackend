@@ -192,7 +192,7 @@ class MealController {
 
         if (!userMeals.length > 0) {
           return res.status(400).json({
-            status: 404,
+            status: 200,
             message: "User meals not found for the current " + time,
             data: {
               total,
