@@ -41,16 +41,18 @@ class ProgressTracker {
       const parseData = (userWorkouts, time) => {
         let targetCalories = 0;
         let burntCalories = 0;
+        let leftCalories = 0;
         let finishedWorkouts = 0;
         let unfinishedWorkouts = 0;
         let totalWorkout = 0;
 
         if (!userWorkouts.length > 0) {
-          return res.status(400).json({
+          return res.status(200).json({
             message: "User workouts not found for the current " + time,
             data: {
               targetCalories,
               burntCalories,
+              leftCalories,
               finishedWorkouts,
               unfinishedWorkouts,
               totalWorkout,
@@ -74,6 +76,7 @@ class ProgressTracker {
           data: {
             targetCalories,
             burntCalories,
+            leftCalories : targetCalories-burntCalories
             finishedWorkouts,
             unfinishedWorkouts,
             totalWorkout: finishedWorkouts + unfinishedWorkouts,
@@ -125,6 +128,7 @@ class ProgressTracker {
 
             let targetCalories = 0;
             let burntCalories = 0;
+            let leftCalories = 0;
             let finishedWorkouts = 0;
             let unfinishedWorkouts = 0;
 
@@ -144,6 +148,7 @@ class ProgressTracker {
               year: parseInt(year),
               targetCalories,
               burntCalories,
+              leftCalories : targetCalories - burntCalories,
               finishedWorkouts,
               unfinishedWorkouts,
               totalWorkouts: finishedWorkouts + unfinishedWorkouts,
