@@ -76,7 +76,7 @@ class ProgressTracker {
           data: {
             targetCalories,
             burntCalories,
-            leftCalories : targetCalories-burntCalories
+            leftCalories : targetCalories-burntCalories,
             finishedWorkouts,
             unfinishedWorkouts,
             totalWorkout: finishedWorkouts + unfinishedWorkouts,
