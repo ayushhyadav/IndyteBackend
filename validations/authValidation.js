@@ -39,6 +39,10 @@ export const updateSchema = vine.object({
   gender: vine.string().optional(),
   goal: vine.string().optional(),
   profile: vine.string().optional(),
+  water_target: vine.number().optional(),
+  sleep_target: vine.number().optional(),
+  step_target: vine.number().optional(),
+  calories_target: vine.number().optional(),
 });
 export const loginSchema = vine.object({
   email: vine.string().email(),
