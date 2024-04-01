@@ -31,6 +31,7 @@ export const dateMonthScheme = vine.object({
 });
 
 export const updateSchema = vine.object({
+  name: vine.string().minLength(2).maxLength(150).optional(),
   height: vine.number().optional(),
   height_unit: vine.string().optional(),
   weight: vine.number().optional(),
@@ -70,6 +71,7 @@ export const dieticianRegisterSchema = vine.object({
   email: vine.string().email(),
 });
 export const dieticianUpdateSchema = vine.object({
+  name: vine.string().minLength(2).maxLength(150).optional(),
   qualification: vine.string().optional(),
   address: vine.string().optional(),
   aadhar: vine.string().optional(),
