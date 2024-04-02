@@ -31,7 +31,7 @@ export const dateMonthScheme = vine.object({
 });
 
 export const updateSchema = vine.object({
-  name: vine.string().minLength(2).maxLength(150).optional(),
+  name: vine.string().optional(),
   height: vine.number().optional(),
   height_unit: vine.string().optional(),
   weight: vine.number().optional(),
