@@ -1,5 +1,9 @@
 import prisma from "../db/db.config.js";
-import { validDate, getDateRange, isValidObjectId } from "../helpers/dateValidate.js";
+import {
+  validDate,
+  getDateRange,
+  isValidObjectId,
+} from "../helpers/dateValidate.js";
 
 class MealController {
   static async register(req, res) {

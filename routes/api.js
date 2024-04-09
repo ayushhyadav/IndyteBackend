@@ -121,6 +121,12 @@ router.delete(
 
 router.post("/steps-intake", stepsIntakeController.createStepIntake);
 router.get("/steps-logs/:userId/:date", StepsLogController.getStepsLog);
+router.get("/getusersteps", onlyUser, StepsLogController.getUserStepProgress);
+router.get(
+  "/getusersteps/:id",
+  adminOrDietician,
+  StepsLogController.getUserStepProgress
+);
 
 // sleep wali bakchodiyan
 

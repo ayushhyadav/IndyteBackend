@@ -91,8 +91,8 @@ export default class UserAuthController {
 
         const token = await generateToken({ ...user, role: "user" });
         return res.status(201).json({
-          status:200,
-          user:{...all},
+          status: 200,
+          user: { ...all },
           token: `Bearer ${token}`,
           role: "user",
         });
@@ -191,6 +191,7 @@ export default class UserAuthController {
             phone,
           },
         });
+        if (!user) return res.status(404).json({ message: "User not found" });
         const { password, ...all } = user;
         const token = await generateToken({ ...user, role: "user" });
         return res.status(201).json({
