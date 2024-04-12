@@ -12,6 +12,53 @@ import {
 } from "../../validations/authValidation.js";
 import prisma from "../../db/db.config.js";
 class Upload {
+  static updateProfilePicture = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+      const buffers = [];
+      const image = req.files;
+      for (const key in image) {
+        const item = image[key];
+        if (Array.isArray(item)) item.forEach((e) => buffers.push(e));
+        else buffers.push(item);
+      }
+      const uploadImage = await Promise.all(
+        buffers.map(async (buffer) => {
+          const image = await validateImage(buffer);
+          return image;
+        })
+      );
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `profile/${uploadImage[0].key}`,
+        Body: uploadImage[0].Body,
+        ContentType: uploadImage[0].ContentType,
+        Metadata: {
+          caption: uploadImage[0].key,
+        },
+      };
+      const command = new PutObjectCommand(params);
+      const response = await s3.send(command);
+      if (response) {
+        await prisma.banner.create({
+          data: {
+            name: uploadImage[0].key,
+            mimetype: uploadImage[0].ContentType,
+            imgLink: `profile/${uploadImage[0].key}`,
+          },
+        });
+
+        return res.status(200).json({
+          message: "Image uploaded successfully",
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+      });
+    }
+  };
   static addMonthlyImage = async (req, res) => {
     let date = formatDate(new Date());
     try {

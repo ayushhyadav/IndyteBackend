@@ -175,12 +175,23 @@ class StepsLogController {
         return userSteps;
       };
 
+      const totalSteps = (graph) => {
+        let total = 0;
+        graph?.map((e) => {
+          total += e.totalSteps;
+        });
+        return total;
+      };
+
       switch (date) {
         case "weekly":
           const week = await queryData(7, new Date());
           const data = parseWeekData(week);
           let minMax = findMixAndMax(data);
-          return res.status(200).json({ minMax, graph: data });
+          const totalWeeklySteps = totalSteps(data);
+          return res
+            .status(200)
+            .json({ total: totalWeeklySteps, minMax, graph: data });
           break;
         case "monthly":
           const graph = await queryData(31, new Date());
@@ -190,17 +201,25 @@ class StepsLogController {
             end: endDate,
           });
           const monthlyMinMax = findMixAndMax(monthly);
-          return res
-            .status(200)
-            .json({ minMax: monthlyMinMax, graph: monthly });
+          const totalMonthlySteps = totalSteps(monthly);
+
+          return res.status(200).json({
+            total: totalMonthlySteps,
+            minMax: monthlyMinMax,
+            graph: monthly,
+          });
           break;
         case "yearly":
           const yearly = await queryData(365, new Date());
           const yearlyData = parseYear(yearly);
           const yearlyMinMax = findMixAndMax(yearlyData);
-          return res
-            .status(200)
-            .json({ minMax: yearlyMinMax, graph: yearlyData });
+          const totalYearlySteps = totalSteps(yearlyData);
+
+          return res.status(200).json({
+            total: totalYearlySteps,
+            minMax: yearlyMinMax,
+            graph: yearlyData,
+          });
           break;
 
         default:

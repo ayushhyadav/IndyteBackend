@@ -23,6 +23,7 @@ export const getSignedImage = async (Key) => {
   const getObjectParams = {
     Bucket: process.env.BUCKET_NAME,
     Key: Key,
+    
   };
   const command = new GetObjectCommand(getObjectParams);
   const url = await getSignedUrl(s3, command);
