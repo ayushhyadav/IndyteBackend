@@ -209,10 +209,20 @@ class Upload {
         return res.status(200).json(await parseDate);
       };
 
-      let yearRegex = /\b\d{4}\b/;
-      if (yearRegex.test(parseInt(date)))
-        await queryData(365, new Date(date, 1));
-      else await queryData(365 * 10, new Date());
+      let yearRegex = /^\d{4}$/;
+      let monthRegex = /^(?:19|20)\d\d-(?:0[1-9]|1[0-2])$/;
+      if (yearRegex.test(date)) {
+        await queryData(365, new Date(date, 12, 31));
+      } else if (monthRegex.test(date)) {
+        await queryData(30, new Date(date));
+      } else if (date == "allTime") {
+        await queryData(365 * 10, new Date());
+      } else {
+        return res.status(400).json({
+          message:
+            "Invalid date it must be in format year YYYY or month YYYY-MM or alltime",
+        });
+      }
     } catch (error) {
       console.log(error.message);
       return res.status(500).json({ message: "Internal server error" });
