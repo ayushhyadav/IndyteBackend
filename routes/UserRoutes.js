@@ -15,6 +15,7 @@ userRoutes.get("/me/:id", onlyAdmin, UserAuthController.me);
 userRoutes.put("/update", onlyUser, UserAuthController.update);
 userRoutes.put("/update/:id", onlyAdmin, UserAuthController.update);
 userRoutes.put("/resetPassword", UserAuthController.resetPassword);
+userRoutes.put("/profile", fileUpload(), onlyUser, Upload.updateProfilePicture);
 
 // Monthly photo routes
 userRoutes.get("/progressPhoto", onlyUser, Upload.getMonthlyImage);

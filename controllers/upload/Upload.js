@@ -30,29 +30,36 @@ class Upload {
         })
       );
       const params = {
-        Bucket: process.env.BUCKET_NAME,
+        Bucket: "indyteprofile",
         Key: `profile/${uploadImage[0].key}`,
         Body: uploadImage[0].Body,
         ContentType: uploadImage[0].ContentType,
-        Metadata: {
-          caption: uploadImage[0].key,
-        },
       };
+
+      const userAvailable = await prisma.user.findFirst({
+        where: { id: req.user?.id },
+      });
+
+      if (!userAvailable) {
+        return res.status(404).json({ message: "User not found" });
+      }
       const command = new PutObjectCommand(params);
       const response = await s3.send(command);
       if (response) {
-        await prisma.banner.create({
+        await prisma.user.update({
+          where: { id: req.user?.id },
           data: {
-            name: uploadImage[0].key,
-            mimetype: uploadImage[0].ContentType,
-            imgLink: `profile/${uploadImage[0].key}`,
+            profile: `${process.env.S3_PUBLIC_URL}/profile/${uploadImage[0].key}`,
           },
         });
 
         return res.status(200).json({
-          message: "Image uploaded successfully",
+          profile: `${process.env.S3_PUBLIC_URL}/profile/${uploadImage[0].key}`,
         });
       }
+      return res.status(500).json({
+        message: "Something went wrong. Please try again",
+      });
     } catch (error) {
       return res.status(500).json({
         message: error.message,
@@ -65,7 +72,6 @@ class Upload {
       const user = req.user;
       if (req.params.month) {
         const newDate = await validatorCompile(dateMonthScheme, req.params);
-        console.log(newDate);
         if (newDate.error)
           return res.status(400).json({ error: newDate.error });
         date = formatDate(new Date(newDate.year, newDate.month - 1, 1));
