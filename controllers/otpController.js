@@ -1,7 +1,7 @@
 import otpValidate from "../helpers/otpValidate.js";
 import Twilio from "twilio";
-const accountSid = "AC00611250c27880073ef08129ede99689";
-const authToken = "15a74c2d4d1f0c2393114f582e513eff";
+const accountSid = process.env.TWILO_ACCOUNT_SID;
+const authToken = process.env.TWILO_AUTH_TOKEN;
 const client = new Twilio(accountSid, authToken);
 
 import prisma from "../db/db.config.js";
