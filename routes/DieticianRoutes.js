@@ -1,5 +1,7 @@
 import { Router } from "express";
+import fileUpload from "express-fileupload";
 import DieticianAuthController from "../controllers/auth/DieticianAuthController.js";
+import Upload from "../controllers/upload/Upload.js";
 import auth, {
   onlyAdmin,
   onlyDietician,
@@ -22,7 +24,12 @@ dieticianRoutes.post(
 dieticianRoutes.get("/me", onlyDietician, DieticianAuthController.me);
 dieticianRoutes.get("/me/:id", allUser, DieticianAuthController.getById);
 dieticianRoutes.get("/getAll", allUser, DieticianAuthController.getAll);
-
+dieticianRoutes.put(
+  "/profile",
+  fileUpload(),
+  onlyDietician,
+  Upload.updateDieticianPicture
+);
 dieticianRoutes.put("/update", onlyDietician, DieticianAuthController.update);
 dieticianRoutes.put(
   "/update/:id",

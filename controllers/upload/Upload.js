@@ -234,6 +234,61 @@ class Upload {
       return res.status(500).json({ message: "Internal server error" });
     }
   };
+
+  static updateDieticianPicture = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+      const buffers = [];
+      const image = req.files;
+      for (const key in image) {
+        const item = image[key];
+        if (Array.isArray(item)) item.forEach((e) => buffers.push(e));
+        else buffers.push(item);
+      }
+      const uploadImage = await Promise.all(
+        buffers.map(async (buffer) => {
+          const image = await validateImage(buffer);
+          return image;
+        })
+      );
+      const params = {
+        Bucket: "indyteprofile",
+        Key: `dietician/${uploadImage[0].key}`,
+        Body: uploadImage[0].Body,
+        ContentType: uploadImage[0].ContentType,
+      };
+
+      const userAvailable = await prisma.dietician.findFirst({
+        where: { id: req.user?.id },
+      });
+
+      if (!userAvailable) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const command = new PutObjectCommand(params);
+      const response = await s3.send(command);
+      if (response) {
+        await prisma.dietician.update({
+          where: { id: req.user?.id },
+          data: {
+            profile: `${process.env.S3_PUBLIC_URL}/dietician/${uploadImage[0].key}`,
+          },
+        });
+
+        return res.status(200).json({
+          profile: `${process.env.S3_PUBLIC_URL}/dietician/${uploadImage[0].key}`,
+        });
+      }
+      return res.status(500).json({
+        message: "Something went wrong. Please try again",
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+      });
+    }
+  };
 }
 
 export default Upload;
