@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { onlyAdmin, onlyUser, allUser } from "../middleware/Authenticate.js";
+import {
+  onlyAdmin,
+  onlyUser,
+  allUser,
+  adminOrDietician,
+} from "../middleware/Authenticate.js";
 import UserAuthController from "../controllers/auth/UserAuthController.js";
 import Upload from "../controllers/upload/Upload.js";
 const userRoutes = Router();
@@ -11,7 +16,7 @@ userRoutes.post("/emailLogin", UserAuthController.emailLogin);
 userRoutes.post("/requestOtp", UserAuthController.loginOtp);
 userRoutes.post("/phoneLogin", UserAuthController.phoneLogin);
 userRoutes.get("/me", onlyUser, UserAuthController.me);
-userRoutes.get("/me/:id", onlyAdmin, UserAuthController.me);
+userRoutes.get("/me/:id", adminOrDietician, UserAuthController.me);
 userRoutes.put("/update", onlyUser, UserAuthController.update);
 userRoutes.put("/update/:id", onlyAdmin, UserAuthController.update);
 userRoutes.put("/resetPassword", UserAuthController.resetPassword);
