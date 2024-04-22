@@ -211,7 +211,12 @@ export default class UserAuthController {
 
   static async me(req, res) {
     try {
-      const { id } = req.user.role !== "admin" ? req.user : req.params;
+      console.log(req.user);
+      const { id } =
+        req.user.role == "admin" || req.user.role == "dietician"
+          ? req.params
+          : req.user;
+        
       const user = await prisma.user.findUnique({
         where: {
           id,
