@@ -63,9 +63,9 @@ model User {
 
   goal String?
 
-  water_target Int @default(0) // LITRES OF WATER 
-  sleep_target Int @default(0) // HOURS OF SLEEP 
-  step_target  Int @default(0) // NUMBER OF STEPS 
+  water_target    Int @default(0) // LITRES OF WATER 
+  sleep_target    Int @default(0) // HOURS OF SLEEP 
+  step_target     Int @default(0) // NUMBER OF STEPS 
   calories_target Int @default(0)
 
   dietician Dietician? @relation(fields: [dieticianId], references: [id])
@@ -83,9 +83,11 @@ model User {
 
   sleepIntakes SleepIntake[]
   sleepLogs    SleepLog[]
+  pollComment  PollComment[]
+  pollLike     PollLikes[]
+  pollVote     PollVote[]
 
-  workout UserWithWorkout[]
-
+  workout    UserWithWorkout[]
   weightLogs WeightLog[]
   medicines  Medicine[]
 }
@@ -93,7 +95,7 @@ model User {
 model Meal {
   id          String      @id @default(auto()) @map("_id") @db.ObjectId
   name        String      @unique
-  image String? 
+  image       String?
   nutrition   Nutrition[]
   description String
   ingredients String[]
@@ -142,21 +144,21 @@ model UserWithMeals {
 // }
 
 model Banner {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  name String?
-  mimetype String
-  imgLink String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String?
+  mimetype  String
+  imgLink   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model ProgressPhoto {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId
-  imgLink String
-  date String
-  facing String
-  mimetype String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  imgLink   String
+  date      String
+  facing    String
+  mimetype  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -190,23 +192,24 @@ model Dietician {
 
   user User[]
 }
+
 model Admin {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  username      String   @unique
-  password      String
-  name          String
-  logo          String?
-  address       String  
-  profile       String?
-  company String?
-  company_details       String?  
-  company_address       String?  
-  tax_number       String?  
-  certificate       String?  
-  phone         String   @unique
-  email         String   @unique
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  username        String   @unique
+  password        String
+  name            String
+  logo            String?
+  address         String
+  profile         String?
+  company         String?
+  company_details String?
+  company_address String?
+  tax_number      String?
+  certificate     String?
+  phone           String   @unique
+  email           String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Workout {
@@ -307,8 +310,8 @@ model WaterLog {
 // -> -------------------------- steps wali bakchodi ----------------------------
 
 model StepIntake {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  user           User?    @relation(fields: [userId], references: [id])
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  user           User?     @relation(fields: [userId], references: [id])
   userId         String?   @db.ObjectId
   stepsTaken     Int?
   recordedAt     DateTime?
@@ -323,7 +326,7 @@ model StepIntake {
 }
 
 model StepLog {
-  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
   user                User?   @relation(fields: [userId], references: [id])
   userId              String? @db.ObjectId
   date                String
@@ -354,7 +357,7 @@ model SleepIntake {
 
 model SleepLog {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
-  user         User?          @relation(fields: [userId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
   userId       String        @db.ObjectId
   date         String
   totalSleep   Int // Total sleep in minutes for the day
@@ -377,7 +380,7 @@ model WeightLog {
 
   createdAt DateTime @default(now())
 
-  user   User?  @relation(fields: [userId], references: [id]) // Define the relationship with User model
+  user   User?   @relation(fields: [userId], references: [id]) // Define the relationship with User model
   userId String? @db.ObjectId // Foreign key to User model
 }
 
@@ -387,17 +390,74 @@ enum BeforeOrAfterMeal {
 }
 
 model Medicine {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  name     String   
-  userId   String   @db.ObjectId
-  user     User?    @relation(fields: [userId], references: [id])
-  date     String
-  time     String
-  quantity String  
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  userId            String            @db.ObjectId
+  user              User?             @relation(fields: [userId], references: [id])
+  date              String
+  time              String
+  quantity          String
   beforeOrAfterMeal BeforeOrAfterMeal
-  medType   String
-  finished Boolean  @default(false)
+  medType           String
+  finished          Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
 
+model Polls {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  topic     String
+  title     String
+  choice    PollOptions[]
+  banner    String
+  comment   PollComment[]
+  likes     PollLikes[]
+  votes     PollVote[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+type PollOptions {
+  name String
+}
+
+model PollVote {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  option    Int
+  Polls     Polls?   @relation(fields: [pollsId], references: [id])
+  pollsId   String?  @db.ObjectId
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+  createdAt DateTime @default(now())
+}
+
+model PollComment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  comment   String
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+  Polls     Polls?   @relation(fields: [pollsId], references: [id])
+  pollsId   String?  @db.ObjectId
+}
+
+model PollLikes {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Polls     Polls?   @relation(fields: [pollsId], references: [id])
+  pollsId   String?  @db.ObjectId
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+}
+
+model Blogs {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  banner    String
+  author    String
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

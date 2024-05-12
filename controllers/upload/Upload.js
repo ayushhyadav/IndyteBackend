@@ -1,6 +1,7 @@
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import s3, { getSignedImage } from "../../config/S3.js";
 import { validateImage } from "../../utils/helper.js";
+
 import {
   formatDate,
   isValidObjectId,
@@ -12,6 +13,45 @@ import {
 } from "../../validations/authValidation.js";
 import prisma from "../../db/db.config.js";
 class Upload {
+  static uploadOnePhoto = async ({ image, path }) => {
+    try {
+      if (!path) return { error: "Path must be provided" };
+      const buffers = [];
+      for (const key in image) {
+        const item = image[key];
+        if (Array.isArray(item)) item.forEach((e) => buffers.push(e));
+        else buffers.push(item);
+      }
+      const uploadImage = await Promise.all(
+        buffers.map(async (buffer) => {
+          const image = await validateImage(buffer);
+          return image;
+        })
+      );
+      const params = {
+        Bucket: "indyteprofile",
+        Key: `${path}/${uploadImage[0].key}`,
+        Body: uploadImage[0].Body,
+        ContentType: uploadImage[0].ContentType,
+      };
+
+      const command = new PutObjectCommand(params);
+      const response = await s3.send(command);
+      if (response) {
+        return {
+          url: `${process.env.S3_PUBLIC_URL}/${path}/${uploadImage[0].key}`,
+        };
+      }
+      return {
+        error: "Something went wrong. Please try again",
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        error: "Something went wrong. Please try again",
+      };
+    }
+  };
   static updateProfilePicture = async (req, res) => {
     try {
       if (!req.files)

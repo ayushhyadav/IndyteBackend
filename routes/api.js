@@ -3,6 +3,7 @@ import AuthController from "../controllers/user/AuthController.js";
 import authMiddleware, {
   onlyUser,
   adminOrDietician,
+  onlyAdmin,
 } from "../middleware/Authenticate.js";
 
 import ProfileController from "../controllers/ProfileController.js";
