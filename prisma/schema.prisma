@@ -113,7 +113,7 @@ model UserWithMeals {
   userId    String   @db.ObjectId
   mealId    String?  @db.ObjectId
   date      String
-  mealTime  MealTime
+  mealTime  String
   imgUrl    String?
   comment   String?
   review    Int?
@@ -501,12 +501,12 @@ model OurSuccess {
 }
 
 model Collection {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  title    String
-  banner   String
-  author   String
-  content  String
-  category String
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  banner    String
+  author    String
+  content   String
+  category  String
   article   Article[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
