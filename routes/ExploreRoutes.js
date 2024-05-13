@@ -7,6 +7,8 @@ import {
   GetInspired,
   OurSuccess,
   ClientStories,
+  Collection,
+  Article,
 } from "../controllers/explore/ExploreController.js";
 const router = Router();
 
@@ -73,6 +75,27 @@ router.get(
   allUser,
   ClientStories.getClientStoriesDetails
 );
-router.delete("/clientStories/:clientId", onlyAdmin, ClientStories.deleteClientStories);
+router.delete(
+  "/clientStories/:clientId",
+  onlyAdmin,
+  ClientStories.deleteClientStories
+);
+
+// Collection
+router.post(
+  "/collection",
+  fileupload(),
+  onlyAdmin,
+  Collection.createCollection
+);
+router.get("/collection", allUser, Collection.getAllCollection);
+router.get("/collection/:id", allUser, Collection.getCollectionDetails);
+router.delete("/collection/:id", onlyAdmin, Collection.deleteCollection);
+
+// article
+router.post("/article", fileupload(), onlyAdmin, Article.createArticle);
+router.get("/article", fileupload(), onlyAdmin, Article.getAllArticle);
+router.get("/article/:id", allUser, Article.getArticleDetails);
+router.get("/article/:id", onlyAdmin, Article.deleteArticleDetails);
 
 export default router;

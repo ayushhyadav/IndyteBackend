@@ -3,6 +3,8 @@ import {
   isJSON,
   pollCommentValidate,
   getInspiredValidate,
+  collectionValidate,
+  articleValidate,
 } from "./ExploreValidator.js";
 import prisma from "../../db/db.config.js";
 import { isValidObjectId } from "../../helpers/dateValidate.js";
@@ -927,10 +929,276 @@ export class ClientStories {
 export class Collection {
   static createCollection = async (req, res) => {
     try {
-      
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let collection = req.body.collection;
+      if (isJSON(collection)) collection = JSON.parse(collection);
+
+      let validCollection = await validatorCompile(
+        collectionValidate,
+        collection
+      );
+      if (validCollection.error)
+        return res.status(400).json({ message: validCollection.error });
+
+      const validOurSuccessExist = await prisma.collection.findFirst({
+        where: {
+          title: validCollection.title,
+        },
+      });
+      if (validOurSuccessExist)
+        return res.status(400).json({ message: "Collection already exists" });
+
+      const banner = await Upload.uploadOnePhoto({
+        image: req.files,
+        path: "collection",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const collectionCreate = await prisma.collection.create({
+        data: {
+          title: validCollection.title,
+          content: validCollection.content,
+          author: validCollection.author,
+          category: validCollection.category,
+          banner: banner.url,
+        },
+      });
+      if (collectionCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Collection created successfully.",
+          collection: collectionCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
     } catch (error) {
       console.log(error);
       return res.status(500).json({ message: " Internal Server error" });
+    }
+  };
+
+  static getAllCollection = async (req, res) => {
+    try {
+      const polls = await prisma.collection.findMany({
+        select: {
+          id: true,
+          category: true,
+          title: true,
+          banner: true,
+          _count: {
+            select: { article: true },
+          },
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Collection fetched successfully.",
+        Collection: polls,
+      });
+    } catch (error) {
+      console.log("The error is", error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getCollectionDetails = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id)) {
+        return res.status(404).json({ error: "Invalid id or no id" });
+      }
+      const poll = await prisma.collection.findUnique({
+        where: {
+          id: id,
+        },
+        select: {
+          id: true,
+          title: true,
+          banner: true,
+          content: true,
+          category: true,
+          createdAt: true,
+          _count: {
+            select: { article: true },
+          },
+          article: true,
+        },
+      });
+
+      if (poll)
+        return res.status(200).json({
+          status: 200,
+          message: "Collection fetched successfully.",
+          collection: poll,
+        });
+      return res.status(404).json({
+        status: 404,
+        message: "Collection not found.",
+      });
+    } catch (error) {
+      console.log("The error is", error);
+      return res.status(500).json({
+        status: 500,
+        message: "Something went wrong. Please try again.",
+      });
+    }
+  };
+
+  static deleteCollection = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.collection.deleteMany({
+        where: {
+          id: id,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Collection deleted successfully." });
+      return res.status(400).json({ message: "Collection does not exist." });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+}
+
+export class Article {
+  static createArticle = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let article = req.body.article;
+      if (isJSON(article)) article = JSON.parse(article);
+
+      let validArticle = await validatorCompile(articleValidate, article);
+      if (validArticle.error)
+        return res.status(400).json({ message: validArticle.error });
+
+      const collectionExist = await prisma.collection.findFirst({
+        where: {
+          id: validArticle.collectionId,
+        },
+      });
+      if (!collectionExist)
+        return res.status(404).json({ message: "Invalid collection id" });
+
+      const validOurSuccessExist = await prisma.article.findFirst({
+        where: {
+          title: validArticle.title,
+        },
+      });
+      if (validOurSuccessExist)
+        return res.status(400).json({ message: "Article already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "clientStories",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const validOurSuccessCreate = await prisma.article.create({
+        data: {
+          title: validArticle.title,
+          content: validArticle.content,
+          author: validArticle.author,
+          category: validArticle.category,
+          collectionId: validArticle.collectionId,
+          banner: banner,
+        },
+      });
+      if (validOurSuccessCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Article created successfully.",
+          article: validOurSuccessCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getAllArticle = async (req, res) => {
+    try {
+      const inspired = await prisma.article.findMany({
+        select: {
+          id: true,
+          category: true,
+          title: true,
+          banner: true,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Article fetched successfully.",
+        article: inspired,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getArticleDetails = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.article.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (!blogExist)
+        return res.status(400).json({ message: "Article does not exist." });
+      return res.status(200).json({ article: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deleteArticleDetails = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.article.deleteMany({
+        where: {
+          id: clientId,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Article deleted successfully." });
+      return res
+        .status(400)
+        .json({ message: "Article does not exist." });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
     }
   };
 }

@@ -501,12 +501,12 @@ model OurSuccess {
 }
 
 model Collection {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  banner    String
-  category  String
-  author    String
-  content   String
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  title    String
+  banner   String
+  author   String
+  content  String
+  category String
   article   Article[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt

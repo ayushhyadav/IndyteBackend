@@ -51,6 +51,19 @@ export const clientStoriesValidate = vine.object({
   clientDetails: vine.string().trim().optional(),
 });
 
+export const collectionValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  category: vine.string().trim(),
+  content: vine.string().trim(),
+});
+export const articleValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  category: vine.string().trim(),
+  content: vine.string().trim(),
+  collectionId: vine.string().regex(/^[0-9a-fA-F]{24}$/),
+});
 export const pollCommentValidate = vine.object({
   pollsId: vine.string().regex(/^[0-9a-fA-F]{24}$/),
   comment: vine.string().minLength(2),
