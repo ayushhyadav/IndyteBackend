@@ -455,9 +455,72 @@ model PollLikes {
 model Blogs {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   title     String
-  banner    String
+  banner    String[]
   author    String
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ClientStories {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  banner        String[]
+  author        String
+  category      String
+  clientName    String
+  clientDetails String?
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model GetInspired {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  banner    String[]
+  author    String
+  category  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OurSuccess {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  banner        String[]
+  author        String
+  tags          String[]
+  category      String
+  clientName    String?
+  clientDetails String?
+  content       String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Collection {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  banner    String
+  category  String
+  author    String
+  content   String
+  article   Article[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Article {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  banner       String[]
+  author       String
+  category     String
+  content      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  Collection   Collection? @relation(fields: [collectionId], references: [id])
+  collectionId String?     @db.ObjectId
 }

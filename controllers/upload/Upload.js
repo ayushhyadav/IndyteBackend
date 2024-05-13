@@ -52,6 +52,55 @@ class Upload {
       };
     }
   };
+  static uploadManyPhoto = async ({ image, path }) => {
+    try {
+      if (!path) return { error: "Path must be provided" };
+      const buffers = [];
+      for (const key in image) {
+        const item = image[key];
+        if (Array.isArray(item)) item.forEach((e) => buffers.push(e));
+        else buffers.push(item);
+      }
+      const uploadImage = await Promise.all(
+        buffers.map(async (buffer) => {
+          const image = await validateImage(buffer);
+          return image;
+        })
+      );
+
+      console.log(uploadImage);
+
+      const upload = [];
+
+      await Promise.all(
+        uploadImage.map(async (image) => {
+          const params = {
+            Bucket: "indyteprofile",
+            Key: `${path}/${image.key}`,
+            Body: image.Body,
+            ContentType: image.ContentType,
+          };
+
+          const command = new PutObjectCommand(params);
+          const response = await s3.send(command);
+          if (response) {
+            upload.push(`${process.env.S3_PUBLIC_URL}/${path}/${image.key}`);
+          }
+        })
+      );
+
+      if (upload.length > 0) return upload;
+
+      return {
+        error: "Something went wrong. Please try again",
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        error: "Something went wrong. Please try again",
+      };
+    }
+  };
   static updateProfilePicture = async (req, res) => {
     try {
       if (!req.files)

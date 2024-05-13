@@ -19,6 +19,38 @@ export const pollValidate = vine.object({
   banner: vine.string().optional(),
 });
 
+export const blogValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  content: vine.string().trim(),
+});
+
+export const getInspiredValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  content: vine.string().trim(),
+  category: vine.string().trim(),
+});
+
+export const ourSuccessValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  content: vine.string().trim(),
+  category: vine.string().trim(),
+  clientName: vine.string().trim().optional(),
+  clientDetails: vine.string().trim().optional(),
+  tags: vine.array(vine.string().trim()),
+});
+
+export const clientStoriesValidate = vine.object({
+  title: vine.string().trim(),
+  author: vine.string().trim(),
+  content: vine.string().trim(),
+  category: vine.string().trim(),
+  clientName: vine.string().trim(),
+  clientDetails: vine.string().trim().optional(),
+});
+
 export const pollCommentValidate = vine.object({
   pollsId: vine.string().regex(/^[0-9a-fA-F]{24}$/),
   comment: vine.string().minLength(2),

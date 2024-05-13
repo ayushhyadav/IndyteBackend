@@ -1,8 +1,18 @@
 import Upload from "../upload/Upload.js";
-import { isJSON, pollCommentValidate } from "./ExploreValidator.js";
+import {
+  isJSON,
+  pollCommentValidate,
+  getInspiredValidate,
+} from "./ExploreValidator.js";
 import prisma from "../../db/db.config.js";
 import { isValidObjectId } from "../../helpers/dateValidate.js";
-import { validatorCompile, pollValidate } from "./ExploreValidator.js";
+import {
+  validatorCompile,
+  pollValidate,
+  ourSuccessValidate,
+  clientStoriesValidate,
+  blogValidate,
+} from "./ExploreValidator.js";
 export class Poll {
   static createPoll = async (req, res) => {
     try {
@@ -11,7 +21,6 @@ export class Poll {
       let poll = req.body.poll;
 
       if (isJSON(poll)) poll = JSON.parse(poll);
-      console.log(poll);
       let validPoll = await validatorCompile(pollValidate, poll);
       if (validPoll.error)
         return res.status(400).json({ message: validPoll.error });
@@ -427,7 +436,501 @@ export class Poll {
   };
 }
 
-
 export class Blogs {
-  
+  static createBlog = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let blog = req.body.blog;
+      if (isJSON(blog)) blog = JSON.parse(blog);
+
+      let validBlog = await validatorCompile(blogValidate, blog);
+      if (validBlog.error)
+        return res.status(400).json({ message: validBlog.error });
+
+      const blogExist = await prisma.blogs.findFirst({
+        where: {
+          title: blog.title,
+        },
+      });
+      if (blogExist)
+        return res.status(400).json({ message: "Blog already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "blogs",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const blogCreate = await prisma.blogs.create({
+        data: {
+          title: validBlog.title,
+          content: validBlog.content,
+          author: validBlog.author,
+          banner: banner,
+        },
+      });
+      if (blogCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Blog created successfully.",
+          blog: blogCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getAllBlog = async (req, res) => {
+    try {
+      const blogs = await prisma.blogs.findMany({
+        select: {
+          id: true,
+          title: true,
+          banner: true,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Polls fetched successfully.",
+        blogs,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getBlogDetails = async (req, res) => {
+    try {
+      const { blogId } = req.params;
+      if (!blogId || !isValidObjectId(blogId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.blogs.findUnique({
+        where: {
+          id: blogId,
+        },
+      });
+      if (!blogExist)
+        return res.status(400).json({ message: "Blog does not exist." });
+      return res.status(200).json({ blog: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deleteBlog = async (req, res) => {
+    try {
+      const { blogId } = req.params;
+      if (!blogId || !isValidObjectId(blogId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.blogs.deleteMany({
+        where: {
+          id: blogId,
+        },
+      });
+      if (blogExist.count > 0)
+        return res.status(400).json({ message: "Blog deleted successfully." });
+      return res.status(400).json({ message: "Blog does not exist." });
+    } catch (error) {}
+  };
+}
+
+export class GetInspired {
+  static createGetInspired = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let getInspired = req.body.getInspired;
+      if (isJSON(getInspired)) getInspired = await JSON.parse(getInspired);
+      let validInspired = await validatorCompile(
+        getInspiredValidate,
+        getInspired
+      );
+      if (validInspired.error)
+        return res.status(400).json({ message: validInspired.error });
+
+      const inspiredExist = await prisma.getInspired.findFirst({
+        where: {
+          title: validInspired.title,
+        },
+      });
+      if (inspiredExist)
+        return res.status(400).json({ message: "Get inspired already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "inspired",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const inspiredCreate = await prisma.getInspired.create({
+        data: {
+          title: validInspired.title,
+          content: validInspired.content,
+          author: validInspired.author,
+          category: validInspired.category,
+          banner: banner,
+        },
+      });
+      if (inspiredCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Get inspired created successfully.",
+          getInspired: inspiredCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getGetInspired = async (req, res) => {
+    try {
+      const inspired = await prisma.getInspired.findMany({
+        select: {
+          id: true,
+          category: true,
+          title: true,
+          banner: true,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Gets inspired fetched successfully.",
+        getInspired: inspired,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getGetInspiredDetails = async (req, res) => {
+    try {
+      const { inspireId } = req.params;
+      if (!inspireId || !isValidObjectId(inspireId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.getInspired.findUnique({
+        where: {
+          id: inspireId,
+        },
+      });
+      if (!blogExist)
+        return res
+          .status(400)
+          .json({ message: "Get inspired does not exist." });
+      return res.status(200).json({ getInspired: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deleteGetInspired = async (req, res) => {
+    try {
+      const { inspireId } = req.params;
+      if (!inspireId || !isValidObjectId(inspireId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.getInspired.deleteMany({
+        where: {
+          id: inspireId,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Get Inspired deleted successfully." });
+      return res.status(400).json({ message: "Get Inspired does not exist." });
+    } catch (error) {}
+  };
+}
+
+export class OurSuccess {
+  static createOurSuccess = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let ourSuccess = req.body.ourSuccess;
+      if (isJSON(ourSuccess)) ourSuccess = JSON.parse(ourSuccess);
+
+      let validOurSuccess = await validatorCompile(
+        ourSuccessValidate,
+        ourSuccess
+      );
+      if (validOurSuccess.error)
+        return res.status(400).json({ message: validOurSuccess.error });
+
+      const validOurSuccessExist = await prisma.ourSuccess.findFirst({
+        where: {
+          title: validOurSuccess.title,
+        },
+      });
+      if (validOurSuccessExist)
+        return res.status(400).json({ message: "Our success already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "ourSuccess",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const validOurSuccessCreate = await prisma.ourSuccess.create({
+        data: {
+          title: validOurSuccess.title,
+          content: validOurSuccess.content,
+          author: validOurSuccess.author,
+          category: validOurSuccess.category,
+          tags: validOurSuccess.tags,
+          clientName: validOurSuccess.clientName,
+          clientDetails: validOurSuccess.clientDetails,
+          banner: banner,
+        },
+      });
+      if (validOurSuccessCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Our success created successfully.",
+          outSuccess: validOurSuccessCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getOurSuccess = async (req, res) => {
+    try {
+      const inspired = await prisma.ourSuccess.findMany({
+        select: {
+          id: true,
+          category: true,
+          tags: true,
+          title: true,
+          banner: true,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Our success fetched successfully.",
+        ourSuccess: inspired,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getOurSuccessDetails = async (req, res) => {
+    try {
+      const { successId } = req.params;
+      if (!successId || !isValidObjectId(successId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.ourSuccess.findUnique({
+        where: {
+          id: successId,
+        },
+      });
+      if (!blogExist)
+        return res.status(400).json({ message: "Our success does not exist." });
+      return res.status(200).json({ ourSuccess: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deleteOurSuccess = async (req, res) => {
+    try {
+      const { successId } = req.params;
+      if (!successId || !isValidObjectId(successId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.ourSuccess.deleteMany({
+        where: {
+          id: successId,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Our success deleted successfully." });
+      return res.status(400).json({ message: "Our success does not exist." });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  };
+}
+
+export class ClientStories {
+  static createClientStories = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let clientStories = req.body.clientStories;
+      if (isJSON(clientStories)) clientStories = JSON.parse(clientStories);
+
+      let validClientStories = await validatorCompile(
+        clientStoriesValidate,
+        clientStories
+      );
+      if (validClientStories.error)
+        return res.status(400).json({ message: validClientStories.error });
+
+      const validOurSuccessExist = await prisma.clientStories.findFirst({
+        where: {
+          title: validClientStories.title,
+        },
+      });
+      if (validOurSuccessExist)
+        return res
+          .status(400)
+          .json({ message: "Client stories already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "clientStories",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const validOurSuccessCreate = await prisma.clientStories.create({
+        data: {
+          title: validClientStories.title,
+          content: validClientStories.content,
+          author: validClientStories.author,
+          category: validClientStories.category,
+          clientName: validClientStories.clientName,
+          clientDetails: validClientStories.clientDetails,
+          banner: banner,
+        },
+      });
+      if (validOurSuccessCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Client stories created successfully.",
+          clientStories: validOurSuccessCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getClientStories = async (req, res) => {
+    try {
+      const inspired = await prisma.clientStories.findMany({
+        select: {
+          id: true,
+          category: true,
+          title: true,
+          banner: true,
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Client stories fetched successfully.",
+        clientStories: inspired,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getClientStoriesDetails = async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      if (!clientId || !isValidObjectId(clientId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.clientStories.findUnique({
+        where: {
+          id: clientId,
+        },
+      });
+      if (!blogExist)
+        return res
+          .status(400)
+          .json({ message: "Client stories does not exist." });
+      return res.status(200).json({ clientStory: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deleteClientStories = async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      if (!clientId || !isValidObjectId(clientId))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.clientStories.deleteMany({
+        where: {
+          id: clientId,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Client stories deleted successfully." });
+      return res
+        .status(400)
+        .json({ message: "Client stories does not exist." });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+}
+
+export class Collection {
+  static createCollection = async (req, res) => {
+    try {
+      
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal Server error" });
+    }
+  };
 }
