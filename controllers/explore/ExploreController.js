@@ -11,6 +11,7 @@ import { isValidObjectId } from "../../helpers/dateValidate.js";
 import {
   validatorCompile,
   pollValidate,
+  publicMealValidate,
   ourSuccessValidate,
   clientStoriesValidate,
   blogValidate,
@@ -1193,9 +1194,132 @@ export class Article {
         return res
           .status(400)
           .json({ message: "Article deleted successfully." });
+      return res.status(400).json({ message: "Article does not exist." });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+}
+
+export class PublicMeal {
+  static createPublicMeal = async (req, res) => {
+    try {
+      if (!req.files)
+        return res.status(400).json({ message: "No image found." });
+
+      let publicMeal = req.body.publicMeal;
+      if (isJSON(publicMeal)) publicMeal = JSON.parse(publicMeal);
+
+      let validClientStories = await validatorCompile(
+        publicMealValidate,
+        publicMeal
+      );
+      if (validClientStories.error)
+        return res.status(400).json({ message: validClientStories.error });
+
+      const validOurSuccessExist = await prisma.publicMeal.findFirst({
+        where: {
+          name: validClientStories.name,
+        },
+      });
+      if (validOurSuccessExist)
+        return res.status(400).json({ message: "Meal already exists" });
+
+      const banner = await Upload.uploadManyPhoto({
+        image: req.files,
+        path: "publicMeal",
+      });
+      if (banner.error)
+        return res.status(400).json({ message: "Error uploading images." });
+
+      const validOurSuccessCreate = await prisma.publicMeal.create({
+        data: {
+          ...validClientStories,
+          image: banner,
+        },
+      });
+      if (validOurSuccessCreate)
+        return res.status(201).json({
+          status: 201,
+          message: "Public meal created successfully.",
+          meal: validOurSuccessCreate,
+        });
+      return res.status(400).json({
+        status: 400,
+        message: "Something went wrong. Please try again.",
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getPublicMeal = async (req, res) => {
+    try {
+      const inspired = await prisma.publicMeal.findMany({
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          nutrition: {
+            select: {
+              cal: true,
+            },
+          },
+        },
+      });
+      return res.status(200).json({
+        status: 200,
+        message: "Public meals fetched successfully.",
+        meals: inspired,
+      });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+        message: "Internal server error.",
+      });
+    }
+  };
+
+  static getPublicMealDetails = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.publicMeal.findUnique({
+        where: {
+          id: id,
+        },
+      });
+      if (!blogExist)
+        return res.status(400).json({ message: "Meal does not exist." });
+      return res.status(200).json({ meal: blogExist });
+    } catch (error) {
+      console.log(error);
+      return res.status(500).json({ message: " Internal server error" });
+    }
+  };
+
+  static deletePublicMeal = async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!id || !isValidObjectId(id))
+        return res.status(404).json({ error: "Invalid id or no id" });
+      const blogExist = await prisma.publicMeal.deleteMany({
+        where: {
+          id: id,
+        },
+      });
+      if (blogExist.count > 0)
+        return res
+          .status(400)
+          .json({ message: "Meal deleted successfully." });
       return res
         .status(400)
-        .json({ message: "Article does not exist." });
+        .json({ message: "Meal does not exist." });
     } catch (error) {
       console.log(error);
       return res.status(500).json({ message: " Internal server error" });

@@ -97,7 +97,7 @@ model Meal {
   name        String      @unique
   image       String?
   nutrition   Nutrition[]
-  description String
+  description String?
   ingredients String[]
   steps       String[]
   createdAt   DateTime    @default(now())
@@ -166,10 +166,10 @@ model ProgressPhoto {
 model Nutrition {
   id      String @id @default(auto()) @map("_id") @db.ObjectId
   meal    Meal?  @relation(fields: [id], references: [id])
-  cal     Int
-  fats    Int
-  protein Int
-  carbs   Int
+  cal     Int?   @default(0)
+  fats    Int?   @default(0)
+  protein Int?   @default(0)
+  carbs   Int?   @default(0)
 }
 
 model Dietician {
@@ -523,4 +523,23 @@ model Article {
   updatedAt    DateTime    @updatedAt
   Collection   Collection? @relation(fields: [collectionId], references: [id])
   collectionId String?     @db.ObjectId
+}
+
+model PublicMeal {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String        @unique
+  image       String[]
+  nutrition   MealNutrition
+  description String
+  ingredients String[]
+  steps       String[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+type MealNutrition {
+  cal     Int
+  fats    Int?
+  protein Int?
+  carbs   Int?
 }

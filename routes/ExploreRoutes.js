@@ -9,6 +9,7 @@ import {
   ClientStories,
   Collection,
   Article,
+  PublicMeal,
 } from "../controllers/explore/ExploreController.js";
 const router = Router();
 
@@ -96,6 +97,12 @@ router.delete("/collection/:id", onlyAdmin, Collection.deleteCollection);
 router.post("/article", fileupload(), onlyAdmin, Article.createArticle);
 router.get("/article", fileupload(), onlyAdmin, Article.getAllArticle);
 router.get("/article/:id", allUser, Article.getArticleDetails);
-router.get("/article/:id", onlyAdmin, Article.deleteArticleDetails);
+router.delete("/article/:id", onlyAdmin, Article.deleteArticleDetails);
+
+// public meals
+router.post("/meals", fileupload(), onlyAdmin, PublicMeal.createPublicMeal);
+router.get("/meals", fileupload(), onlyAdmin, PublicMeal.getPublicMeal);
+router.get("/meals/:id", allUser, PublicMeal.getPublicMealDetails);
+router.delete("/meals/:id", onlyAdmin, PublicMeal.deletePublicMeal);
 
 export default router;

@@ -42,6 +42,19 @@ export const ourSuccessValidate = vine.object({
   tags: vine.array(vine.string().trim()),
 });
 
+export const publicMealValidate = vine.object({
+  name: vine.string().trim(),
+  nutrition: vine.object({
+    cal: vine.number(),
+    fats: vine.number().optional(),
+    carbs: vine.number().optional(),
+    protein: vine.number().optional(),
+  }),
+  description: vine.string().trim(),
+  ingredients: vine.array(vine.string().trim()),
+  steps: vine.array(vine.string().trim()),
+});
+
 export const clientStoriesValidate = vine.object({
   title: vine.string().trim(),
   author: vine.string().trim(),
