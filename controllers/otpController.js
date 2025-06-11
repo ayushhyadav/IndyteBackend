@@ -1,5 +1,3 @@
-import dotenv from "dotenv";
-dotenv.config();
 import otpValidate from "../helpers/otpValidate.js";
 import Twilio from "twilio";
 const accountSid = process.env.TWILO_ACCOUNT_SID;
