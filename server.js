@@ -1,3 +1,5 @@
+
+
 import express from "express";
 import ApiRoutes from "./routes/api.js";
 import cors from "cors";
@@ -7,6 +9,7 @@ import userRoutes from "./routes/UserRoutes.js";
 import genericAuth from "./controllers/auth/GenericAuthController.js";
 import errorMiddleware from "./middleware/Error.js";
 import exploreRoutes from "./routes/ExploreRoutes.js";
+
 const app = express();
 
 app.use(cors());
@@ -16,6 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.get("/", (req, res) => {
   res.status(200).json("Hello Server");
 });
+
 
 app.use("/api", ApiRoutes);
 app.use("/api/user", userRoutes);
