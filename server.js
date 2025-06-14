@@ -20,6 +20,13 @@ app.get("/", (req, res) => {
   res.status(200).json("Hello Server");
 });
 
+app.use((req, res, next) => {
+  const log = `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} | Body: ${JSON.stringify(req.body)} | Query: ${JSON.stringify(req.query)}`;
+  console.log(log);
+  next();
+});
+
+
 
 app.use("/api", ApiRoutes);
 app.use("/api/user", userRoutes);
@@ -30,6 +37,6 @@ app.post("/api/auth/websiteLogin", genericAuth.login);
 
 app.use(errorMiddleware);
 
-app.listen(3000, () => {
-  console.log("server running on 3000");
+app.listen(8080, () => {
+  console.log("server running on 8080");
 });

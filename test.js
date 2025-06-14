@@ -17,3 +17,17 @@
 // console.log(new Date());
 // console.log(nextTimes);
 // router.delete("/test", onlyAdmin, () => console.log("hello"));
+
+
+import bcrypt from 'bcrypt';
+
+// Your test password
+const password = 'Mohit@112';
+
+// Generate a salt with the same cost factor
+const salt = bcrypt.genSaltSync(10);
+console.log('Generated Salt:', salt);
+
+// Hash the password with the generated salt
+const hashedPassword = bcrypt.hashSync(password, salt);
+console.log('Hashed Password:', hashedPassword);

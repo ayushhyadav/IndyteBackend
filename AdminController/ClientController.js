@@ -70,7 +70,7 @@ class ClientController {
     try {
       const { userIds, dieticianId } = req.body;
       console.log({ userIds, dieticianId });
-      console.log("STARTING ASSIGNING CLIENTS");
+      // console.log("STARTING ASSIGNING CLIENTS");
       if (!userIds || userIds?.length < 1 || !dieticianId) {
         return res.status(400).json({
           status: 400,
